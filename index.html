@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Góc Gia Đình — Tích Sao, Thực Đơn & Ăn Gì?</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Inter hỗ trợ tiếng Việt sắc nét -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            cream: '#FFFBF5',
+            coral: {
+              50: '#FFF4F1',
+              100: '#FFE5DD',
+              200: '#FFCBB9',
+              400: '#FF8A65',
+              500: '#FF6B4A',
+              600: '#EE5232',
+            },
+            honey: {
+              50: '#FFFBEB',
+              100: '#FEF3C7',
+              400: '#FBBF24',
+              500: '#F59E0B',
+              600: '#D97706',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    html, body {
+      background-color: #FFFBF5;
+      color: #292524;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.18); }
+      70% { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+    .animate-pop {
+      animation: popBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .tab-panel {
+      animation: fadeSlideUp 0.2s ease-out;
+    }
+
+    .pb-safe-nav {
+      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
+    .bottom-nav-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Ẩn thanh cuộn ngang nhưng vẫn cuộn mượt trên mobile */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col bg-cream text-stone-800 selection:bg-coral-200 selection:text-stone-900">
+
+  <!-- Canvas Pháo Giấy Toàn Màn Hình -->
+  <canvas id="confetti-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
+  <!-- Toast Thông Báo -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 w-[92%] max-w-sm pointer-events-none"></div>
+
+  <!-- Input ẩn để tải ảnh Avatar từ máy -->
+  <input id="avatar-file-input" type="file" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)" />
+
+  <!-- Header & Thanh Điều Hướng Máy Tính -->
+  <header class="sticky top-0 z-30 bg-cream/90 backdrop-blur-md border-b border-orange-100/80">
+    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-coral-500 to-honey-400 flex items-center justify-center shadow-sm shadow-coral-500/20 text-white text-xl">
+          🏡
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-stone-800 leading-tight">Góc Gia Đình</h1>
+          <p class="text-[11px] font-medium text-stone-500 hidden sm:block">Tích sao • Thực đơn • Hôm nay ăn gì?</p>
+        </div>
+      </div>
+
+      <!-- Desktop Tabs -->
+      <nav class="hidden md:flex items-center bg-orange-100/60 p-1 rounded-2xl gap-1" aria-label="Điều hướng chính">
+        <button onclick="switchTab('stars')" data-tab-btn="stars"
+          class="tab-btn-desktop px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+          <span>⭐</span><span>Tích Sao</span>
+        </button>
+        <button onclick="switchTab('menu')" data-tab-btn="menu"
+          class="tab-btn-desktop px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+          <span>🍲</span><span>Thực Đơn</span>
+        </button>
+        <button onclick="switchTab('wheel')" data-tab-btn="wheel"
+          class="tab-btn-desktop px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+          <span>🎡</span><span>Ăn Gì?</span>
+        </button>
+      </nav>
+
+      <!-- Nút bật/tắt âm thanh -->
+      <button id="sound-toggle-btn" onclick="toggleSound()" title="Bật/tắt âm thanh"
+        class="w-10 h-10 rounded-2xl bg-white border border-orange-100 shadow-xs flex items-center justify-center text-stone-600 hover:bg-orange-50 active:scale-95 transition">
+        <span id="sound-icon" class="text-lg">🔊</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Nội Dung Chính -->
+  <main class="flex-1 w-full max-w-4xl mx-auto px-4 pt-4 pb-safe-nav md:pb-10">
+
+    <!-- ========================================================= -->
+    <!-- TAB 1: TÍCH SAO (BÉ NGOAN)                                -->
+    <!-- ========================================================= -->
+    <section id="tab-stars" class="tab-panel space-y-5">
+
+      <!-- Thẻ Hồ Sơ Bé: Avatar Chibi + Tên Bé + Tổng Sao + Thanh Tiến Độ Quà Cuối Tuần -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-coral-500 via-orange-500 to-honey-500 p-5 sm:p-6 text-white shadow-lg shadow-orange-500/20">
+        <div class="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-white/15 blur-2xl pointer-events-none"></div>
+        <div class="absolute -left-8 -bottom-12 w-36 h-36 rounded-full bg-yellow-300/20 blur-2xl pointer-events-none"></div>
+
+        <div class="relative space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- Avatar + Tên Bé -->
+            <div class="flex items-center gap-3.5 sm:gap-4">
+              <!-- Avatar Chibi có thể nhấn để tải ảnh từ máy -->
+              <button onclick="openAvatarModal()" title="Nhấn để đổi ảnh đại diện của bé"
+                class="relative group shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#FFF6E8] p-1 shadow-md ring-4 ring-white/35 hover:scale-105 active:scale-95 transition overflow-hidden">
+                <div id="child-avatar-container" class="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                  <!-- Render Avatar Chibi SVG mặc định hoặc ảnh Base64 -->
+                </div>
+                <span class="absolute bottom-0 inset-x-0 bg-stone-900/55 text-[10px] font-bold text-white py-0.5 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition">
+                  📷 Đổi ảnh
+                </span>
+              </button>
+
+              <!-- Tên bé sửa trực tiếp -->
+              <div class="min-w-0 space-y-1">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full">
+                  ✨ Bảng Sao Bé Ngoan
+                </span>
+
+                <div class="flex items-center gap-2">
+                  <div id="child-name-display" onclick="startEditChildName()"
+                    class="group flex items-center gap-1.5 cursor-pointer rounded-xl px-1.5 -ml-1.5 py-0.5 hover:bg-white/15 transition"
+                    title="Nhấn để sửa tên bé">
+                    <h2 id="child-name-text" class="text-2xl sm:text-3xl font-extrabold tracking-tight truncate max-w-[180px] sm:max-w-[260px]">Bé Dâu</h2>
+                    <span class="bg-white/20 rounded-lg px-2 py-0.5 text-[11px] font-semibold shrink-0">✏️</span>
+                  </div>
+
+                  <div id="child-name-editor" class="hidden flex items-center gap-1.5">
+                    <input id="child-name-input" type="text" maxlength="25"
+                      class="w-36 sm:w-48 px-3 py-1.5 rounded-xl bg-white text-stone-800 font-bold text-base focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                      placeholder="Nhập tên bé..." />
+                    <button onclick="saveChildName()"
+                      class="px-3 py-1.5 rounded-xl bg-stone-900/80 hover:bg-stone-900 text-white text-xs font-bold active:scale-95 transition">
+                      Lưu
+                    </button>
+                  </div>
+                </div>
+                <p class="text-orange-50 text-xs">Chạm vào avatar để dùng ảnh chibi riêng của bé!</p>
+              </div>
+            </div>
+
+            <!-- Hộp Tổng Số Sao -->
+            <div class="flex items-center justify-between sm:justify-end gap-3 bg-white/15 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/25">
+              <div class="flex items-center gap-2.5">
+                <span class="text-3xl sm:text-4xl drop-shadow-sm">⭐</span>
+                <div>
+                  <div class="text-[11px] uppercase tracking-wider text-orange-100 font-semibold">Sao hiện có</div>
+                  <div id="total-stars-value" class="text-3xl sm:text-4xl font-extrabold leading-none">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thanh Tiến Độ Đổi Phần Thưởng Cuối Tuần (Tùy chỉnh trực tiếp) -->
+          <div class="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 space-y-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-lg">🏆</span>
+                <div class="min-w-0">
+                  <div class="text-[11px] text-orange-100 font-semibold">Mục tiêu quà cuối tuần</div>
+                  <div id="weekly-goal-title" class="text-sm sm:text-base font-extrabold truncate">Đi công viên & ăn kem</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button id="redeem-weekly-goal-btn" onclick="redeemWeeklyGoal()"
+                  class="hidden px-3 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-stone-900 font-extrabold text-xs shadow-sm active:scale-95 transition">
+                  🎉 Đổi ngay!
+                </button>
+                <button onclick="openWeeklyGoalModal()"
+                  class="px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition">
+                  ✏️ Sửa mục tiêu
+                </button>
+              </div>
+            </div>
+
+            <div class="w-full h-3 bg-black/20 rounded-full overflow-hidden p-0.5">
+              <div id="weekly-goal-bar" class="h-full bg-gradient-to-r from-yellow-200 to-white rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs font-semibold text-orange-50">
+              <span id="weekly-goal-status">0 / 20 ⭐</span>
+              <span id="weekly-goal-percent">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khu vực Nhiệm vụ cộng/trừ sao nhanh -->
+      <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-100/80 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-stone-800 flex items-center gap-2">
+              <span>📋</span> Nhiệm vụ cộng / trừ sao nhanh
+            </h3>
+            <p class="text-xs text-stone-500">Chạm nút để thưởng sao hoặc nhắc nhở bé ngay</p>
+          </div>
+          <button onclick="openAddTaskModal()"
+            class="px-3.5 py-2 rounded-2xl bg-coral-50 text-coral-600 hover:bg-coral-100 active:scale-95 transition text-xs sm:text-sm font-bold flex items-center gap-1 shrink-0">
+            <span>＋</span> Thêm việc
+          </button>
+        </div>
+
+        <div id="tasks-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Render bằng JS -->
+        </div>
+      </div>
+
+      <!-- Khu vực Đổi Quà Nhỏ -->
+      <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-100/80 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-stone-800 flex items-center gap-2">
+              <span>🎁</span> Góc Đổi Quà Nhỏ
+            </h3>
+            <p class="text-xs text-stone-500">Các phần thưởng nhỏ khích lệ tinh thần bé</p>
+          </div>
+          <button onclick="openAddRewardModal()"
+            class="px-3.5 py-2 rounded-2xl bg-honey-50 text-honey-600 hover:bg-honey-100 active:scale-95 transition text-xs sm:text-sm font-bold flex items-center gap-1 shrink-0">
+            <span>＋</span> Thêm quà
+          </button>
+        </div>
+
+        <div id="rewards-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Render bằng JS -->
+        </div>
+      </div>
+
+      <!-- Khu vực Lịch Sử Cộng/Đổi Sao -->
+      <div class="bg-white rounded-3xl shadow-sm border border-orange-100/80 overflow-hidden">
+        <button onclick="toggleStarHistory()"
+          class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-orange-50/40 transition">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🕒</span>
+            <span class="font-bold text-stone-800 text-sm sm:text-base">Lịch sử cộng / trừ / đổi sao</span>
+            <span id="history-count-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">0</span>
+          </div>
+          <span id="history-chevron" class="text-stone-400 transition-transform duration-200">▼</span>
+        </button>
+        <div id="star-history-panel" class="hidden border-t border-orange-100/80 px-5 py-3 space-y-2 max-h-72 overflow-y-auto">
+          <!-- Render bằng JS -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- TAB 2: THỰC ĐƠN TUẦN & CHECKLIST ĐI CHỢ                   -->
+    <!-- ========================================================= -->
+    <section id="tab-menu" class="tab-panel hidden space-y-4">
+
+      <!-- Pill chuyển đổi nhanh: Thực đơn 7 ngày / Đi chợ -->
+      <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-orange-100 flex items-center gap-1.5">
+        <button onclick="switchMenuSubTab('weekly')" id="subtab-btn-weekly"
+          class="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+          <span>📅</span>
+          <span>Thực đơn 7 ngày</span>
+        </button>
+        <button onclick="switchMenuSubTab('shopping')" id="subtab-btn-shopping"
+          class="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+          <span>🛒</span>
+          <span>Đi chợ</span>
+          <span id="shopping-badge" class="px-2 py-0.5 text-xs font-extrabold rounded-full bg-coral-500 text-white">0</span>
+        </button>
+      </div>
+
+      <!-- PHẦN 2A: THỰC ĐƠN 7 NGÀY -->
+      <div id="menu-view-weekly" class="space-y-4">
+        <!-- Thanh công cụ Random cả tuần -->
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-extrabold text-stone-800 text-base flex items-center gap-1.5">
+              <span>🍲</span> Lên thực đơn thông minh
+            </h3>
+            <p class="text-xs text-stone-500 mt-0.5">Bấm 🔒 để giữ món đã chốt, các bữa còn lại sẽ tự đổi khi Random!</p>
+          </div>
+          <button onclick="randomWholeWeekMenu()"
+            class="px-4 py-3 rounded-2xl bg-gradient-to-r from-coral-500 to-honey-500 hover:from-coral-600 hover:to-honey-600 text-white font-extrabold text-sm shadow-md shadow-coral-500/20 active:scale-95 transition flex items-center justify-center gap-2 shrink-0">
+            <span>🎲</span> Random thực đơn cả tuần
+          </button>
+        </div>
+
+        <div id="weekly-menu-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <!-- 7 ngày Thứ 2 -> Chủ Nhật render bằng JS -->
+        </div>
+      </div>
+
+      <!-- PHẦN 2B: CHECKLIST ĐI CHỢ -->
+      <div id="menu-view-shopping" class="hidden space-y-4">
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-100 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="font-bold text-stone-800 text-base flex items-center gap-1.5">
+                <span>🧺</span> Checklist đi chợ thông minh
+              </h3>
+              <p id="shopping-progress-text" class="text-xs text-stone-500 font-medium mt-0.5">Đã mua 0/0 món</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button id="restore-menu-items-btn" onclick="restoreHiddenMenuItems()"
+                class="hidden px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-semibold transition">
+                ↺ Hiện lại từ thực đơn
+              </button>
+              <button onclick="clearCheckedShoppingItems()"
+                class="px-3 py-1.5 rounded-xl bg-stone-100 text-stone-600 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold transition active:scale-95">
+                🗑️ Xóa mục đã mua
+              </button>
+            </div>
+          </div>
+
+          <div class="w-full h-2.5 bg-orange-100/70 rounded-full overflow-hidden">
+            <div id="shopping-progress-bar" class="h-full bg-gradient-to-r from-coral-500 to-honey-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+
+          <!-- Thêm đồ mua ngoài thực đơn -->
+          <form onsubmit="addExtraShoppingItem(event)" class="flex gap-2 pt-1">
+            <input id="extra-shopping-input" type="text"
+              placeholder="Thêm đồ ngoài thực đơn (Sữa tươi, trái cây, giấy ăn...)"
+              class="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-cream border border-orange-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+            <button type="submit"
+              class="px-4 py-2.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white text-sm font-bold shadow-sm shadow-coral-500/20 active:scale-95 transition shrink-0">
+              Thêm
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-sm border border-orange-100">
+          <div id="shopping-list-container" class="divide-y divide-orange-50">
+            <!-- Render bằng JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- TAB 3: VÒNG QUAY 'HÔM NAY ĂN GÌ?'                         -->
+    <!-- ========================================================= -->
+    <section id="tab-wheel" class="tab-panel hidden space-y-5">
+
+      <!-- Khu vực Vòng Quay HTML5 Canvas -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-orange-100 flex flex-col items-center">
+        <div class="w-full flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-extrabold text-stone-800 text-base sm:text-lg">🎡 Hôm nay ăn gì?</h3>
+            <p class="text-xs text-stone-500">Quay ngẫu nhiên từ các món bạn đã chọn bên dưới</p>
+          </div>
+          <span id="wheel-selected-badge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-coral-50 text-coral-600 border border-coral-100">
+            0 món
+          </span>
+        </div>
+
+        <div class="relative w-full max-w-[330px] sm:max-w-[370px] aspect-square flex items-center justify-center my-1">
+          <!-- Kim chỉ phía trên -->
+          <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 drop-shadow-md pointer-events-none">
+            <svg width="36" height="40" viewBox="0 0 36 40" fill="none">
+              <path d="M18 39L3.5 11C1.8 7.5 4.3 3 8.2 3H27.8C31.7 3 34.2 7.5 32.5 11L18 39Z" fill="#EE5232" stroke="#FFFFFF" stroke-width="3"/>
+              <circle cx="18" cy="12" r="4" fill="#FFFBF5"/>
+            </svg>
+          </div>
+
+          <canvas id="wheel-canvas" class="w-full h-full block rounded-full"></canvas>
+
+          <!-- Nút Quay ở tâm -->
+          <button onclick="spinWheel()"
+            class="absolute z-10 w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full bg-gradient-to-br from-coral-500 to-honey-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-coral-500/35 border-4 border-white hover:scale-105 active:scale-95 transition flex items-center justify-center">
+            QUAY
+          </button>
+        </div>
+
+        <button onclick="spinWheel()"
+          class="mt-4 w-full max-w-xs py-3.5 px-6 rounded-2xl bg-gradient-to-r from-coral-500 to-honey-500 hover:from-coral-600 hover:to-honey-600 text-white font-extrabold text-base shadow-md shadow-coral-500/25 active:scale-[0.98] transition flex items-center justify-center gap-2">
+          <span>🎲</span> Quay chọn món ngay!
+        </button>
+      </div>
+
+      <!-- Bộ Chọn Thông Minh & Thư Viện Món Ăn Việt Nam -->
+      <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-orange-100 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-extrabold text-stone-800 text-base">📚 Thư viện món ăn & Bộ lọc vòng quay</h3>
+            <p class="text-xs text-stone-500">Tích chọn các món bạn muốn đưa lên vòng quay</p>
+          </div>
+          <button onclick="openAddDishModal()"
+            class="px-3.5 py-2 rounded-2xl bg-stone-800 hover:bg-stone-900 text-white text-xs font-bold active:scale-95 transition shrink-0">
+            ＋ Thêm món mới
+          </button>
+        </div>
+
+        <!-- Thanh lọc danh mục -->
+        <div id="wheel-category-pills" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <!-- Render bằng JS -->
+        </div>
+
+        <!-- Ô tìm kiếm nhanh -->
+        <div class="relative">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-sm">🔍</span>
+          <input id="wheel-search-input" type="text" oninput="renderWheelLibrary()"
+            placeholder="Tìm nhanh món ăn (VD: thịt kho, bún, lẩu...)"
+            class="w-full pl-9 pr-9 py-2.5 rounded-2xl bg-cream border border-orange-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+          <button id="wheel-search-clear" onclick="clearWheelSearch()"
+            class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-stone-200 text-stone-600 text-xs flex items-center justify-center font-bold">✕</button>
+        </div>
+
+        <!-- Các nút thao tác nhanh -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="selectAllInCurrentCategory()"
+            class="px-3 py-1.5 rounded-xl bg-coral-50 text-coral-600 hover:bg-coral-100 text-xs font-bold active:scale-95 transition">
+            ✅ Chọn tất cả mục này
+          </button>
+          <button onclick="selectRandom8Dishes()"
+            class="px-3 py-1.5 rounded-xl bg-honey-50 text-honey-600 hover:bg-honey-100 text-xs font-bold active:scale-95 transition">
+            🎲 Chọn ngẫu nhiên 8 món
+          </button>
+          <button onclick="deselectAllDishes()"
+            class="px-3 py-1.5 rounded-xl bg-stone-100 text-stone-600 hover:bg-stone-200 text-xs font-bold active:scale-95 transition">
+            🧹 Bỏ chọn hết
+          </button>
+        </div>
+
+        <!-- Danh sách món ăn trong thư viện -->
+        <div id="wheel-library-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-0.5">
+          <!-- Render bằng JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Thanh Điều Hướng Đáy Màn Hình (Mobile) -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-orange-100 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] bottom-nav-safe" aria-label="Điều hướng di động">
+    <div class="grid grid-cols-3 h-16 max-w-md mx-auto px-2">
+      <button onclick="switchTab('stars')" data-tab-btn-mobile="stars"
+        class="tab-btn-mobile flex flex-col items-center justify-center gap-0.5 rounded-2xl my-1 transition-all">
+        <span class="text-xl leading-none">⭐</span>
+        <span class="text-[11px] font-bold">Tích Sao</span>
+      </button>
+      <button onclick="switchTab('menu')" data-tab-btn-mobile="menu"
+        class="tab-btn-mobile relative flex flex-col items-center justify-center gap-0.5 rounded-2xl my-1 transition-all">
+        <span class="text-xl leading-none">🍲</span>
+        <span class="text-[11px] font-bold">Thực Đơn</span>
+        <span id="mobile-shopping-dot" class="hidden absolute top-1.5 right-[26%] w-2 h-2 rounded-full bg-coral-500"></span>
+      </button>
+      <button onclick="switchTab('wheel')" data-tab-btn-mobile="wheel"
+        class="tab-btn-mobile flex flex-col items-center justify-center gap-0.5 rounded-2xl my-1 transition-all">
+        <span class="text-xl leading-none">🎡</span>
+        <span class="text-[11px] font-bold">Ăn Gì?</span>
+      </button>
+    </div>
+  </nav>
+
+
+  <!-- ========================================================= -->
+  <!-- CÁC HỘP THOẠI (MODALS)                                    -->
+  <!-- ========================================================= -->
+
+  <!-- Modal Avatar Bé -->
+  <div id="modal-avatar" class="fixed inset-0 z-40 hidden items-center justify-center bg-stone-900/45 backdrop-blur-xs p-4">
+    <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-stone-800">Ảnh đại diện của bé</h3>
+        <button onclick="closeModal('modal-avatar')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <div id="modal-avatar-preview" class="w-32 h-32 mx-auto rounded-full bg-[#FFF6E8] p-1.5 ring-4 ring-orange-100 overflow-hidden flex items-center justify-center">
+        <!-- Preview Avatar -->
+      </div>
+      <p class="text-xs text-stone-500">Bạn có thể tải ảnh icon chibi vừa lưu trên máy để làm avatar cho bé.</p>
+      <div class="space-y-2">
+        <button onclick="triggerAvatarFilePicker()"
+          class="w-full py-3 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/20 active:scale-95 transition">
+          📷 Tải ảnh từ máy
+        </button>
+        <button id="btn-reset-avatar" onclick="resetDefaultAvatar()"
+          class="hidden w-full py-2.5 rounded-2xl bg-orange-50 hover:bg-orange-100 text-coral-600 font-bold text-xs active:scale-95 transition">
+          ↺ Khôi phục Avatar Chibi mặc định
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sửa Mục Tiêu Quà Cuối Tuần -->
+  <div id="modal-weekly-goal" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-stone-900/45 backdrop-blur-xs p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-extrabold text-stone-800">🏆 Mục tiêu quà cuối tuần</h3>
+        <button onclick="closeModal('modal-weekly-goal')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <form onsubmit="submitWeeklyGoal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Tên phần thưởng cuối tuần</label>
+          <input id="input-goal-title" type="text" required maxlength="60" placeholder="VD: Đi công viên & ăn kem"
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Số sao mục tiêu (⭐)</label>
+          <input id="input-goal-cost" type="number" min="1" max="500" required
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 font-bold text-base focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/20 active:scale-[0.98] transition">
+          Lưu mục tiêu
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Thêm Nhiệm Vụ (Hỗ trợ cả + và -) -->
+  <div id="modal-add-task" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-stone-900/45 backdrop-blur-xs p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-extrabold text-stone-800">Thêm nhiệm vụ mới</h3>
+        <button onclick="closeModal('modal-add-task')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <form onsubmit="submitNewTask(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Loại nhiệm vụ</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="task-type-plus" onclick="setNewTaskSign(1)"
+              class="py-2.5 rounded-xl text-xs font-bold border transition bg-emerald-500 text-white border-emerald-500">
+              ➕ Thưởng sao (Bé ngoan)
+            </button>
+            <button type="button" id="task-type-minus" onclick="setNewTaskSign(-1)"
+              class="py-2.5 rounded-xl text-xs font-bold border transition bg-white text-stone-600 border-orange-200">
+              ➖ Trừ sao (Nhắc nhở)
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Tên nhiệm vụ</label>
+          <input id="input-task-title" type="text" required maxlength="60" placeholder="VD: Tự mặc quần áo, Không xem TV quá giờ..."
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Số sao (⭐)</label>
+          <div class="flex items-center gap-2">
+            <input id="input-task-stars" type="number" min="1" max="20" value="1" required
+              class="w-24 px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-center font-bold text-base focus:outline-none focus:ring-2 focus:ring-coral-400" />
+            <div class="flex gap-1.5">
+              <button type="button" onclick="document.getElementById('input-task-stars').value=1" class="px-3 py-2 rounded-xl bg-orange-50 text-orange-700 text-xs font-bold">1⭐</button>
+              <button type="button" onclick="document.getElementById('input-task-stars').value=2" class="px-3 py-2 rounded-xl bg-orange-50 text-orange-700 text-xs font-bold">2⭐</button>
+              <button type="button" onclick="document.getElementById('input-task-stars').value=3" class="px-3 py-2 rounded-xl bg-orange-50 text-orange-700 text-xs font-bold">3⭐</button>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/20 active:scale-[0.98] transition">
+          Lưu nhiệm vụ
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Thêm Phần Thưởng Nhỏ -->
+  <div id="modal-add-reward" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-stone-900/45 backdrop-blur-xs p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-extrabold text-stone-800">Thêm phần thưởng mới</h3>
+        <button onclick="closeModal('modal-add-reward')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <form onsubmit="submitNewReward(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Tên phần thưởng</label>
+          <input id="input-reward-title" type="text" required maxlength="60" placeholder="VD: Mua sticker, Xem hoạt hình thêm 20 phút..."
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-honey-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Số sao cần để đổi (⭐)</label>
+          <input id="input-reward-cost" type="number" min="1" max="500" value="10" required
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 font-bold text-base focus:outline-none focus:ring-2 focus:ring-honey-400" />
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-honey-500 hover:bg-honey-600 text-white font-bold text-sm shadow-md shadow-honey-500/20 active:scale-[0.98] transition">
+          Lưu phần thưởng
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Sửa / Chọn Bữa Ăn Trong Thực Đơn -->
+  <div id="modal-edit-meal" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-stone-900/45 backdrop-blur-xs p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <span id="edit-meal-badge" class="text-xs font-bold uppercase tracking-wider text-coral-600 bg-coral-50 px-2.5 py-0.5 rounded-full">Thứ 2 • Bữa Trưa</span>
+          <h3 class="text-lg font-extrabold text-stone-800 mt-1">Chọn hoặc nhập món ăn</h3>
+        </div>
+        <button onclick="closeModal('modal-edit-meal')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <!-- Chọn nhanh từ thư viện món ăn -->
+      <div class="bg-cream rounded-2xl p-3 border border-orange-100 space-y-2">
+        <label class="block text-xs font-bold text-stone-600">📚 Chọn nhanh từ thư viện (tự điền nguyên liệu)</label>
+        <input id="meal-picker-search" type="text" oninput="renderMealPickerOptions()" placeholder="Tìm món để chọn nhanh..."
+          class="w-full px-3 py-2 rounded-xl bg-white border border-orange-200/80 text-xs focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        <div id="meal-picker-list" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pt-1">
+          <!-- Render chip món ăn -->
+        </div>
+      </div>
+
+      <form onsubmit="submitEditMeal(event)" class="space-y-3.5">
+        <input type="hidden" id="edit-meal-day" />
+        <input type="hidden" id="edit-meal-type" />
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Tên món ăn</label>
+          <input id="edit-meal-dish" type="text" required maxlength="100" placeholder="VD: Thịt kho tàu, Canh rau cải"
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Nguyên liệu cần mua (cách nhau bởi dấu phẩy)</label>
+          <textarea id="edit-meal-ingredients" rows="3" placeholder="VD: Thịt ba chỉ, Trứng cút, Rau cải xanh"
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400 resize-none"></textarea>
+          <p class="text-[11px] text-stone-400 mt-1">Nguyên liệu sẽ tự động gộp sang Checklist Đi Chợ.</p>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/20 active:scale-[0.98] transition">
+          Lưu thay đổi
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Thêm Món Mới Vào Thư Viện -->
+  <div id="modal-add-dish" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-stone-900/45 backdrop-blur-xs p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-extrabold text-stone-800">🍽️ Thêm món mới vào thư viện</h3>
+        <button onclick="closeModal('modal-add-dish')" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <form onsubmit="submitNewDish(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Tên món ăn</label>
+          <input id="input-dish-name" type="text" required maxlength="50" placeholder="VD: Canh ngao nấu chua, Ốc hương xào bơ tỏi..."
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Danh mục</label>
+          <select id="input-dish-category"
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-coral-400">
+            <option value="nha_minh">💖 Món nhà mình</option>
+            <option value="com_nha">🍚 Cơm nhà</option>
+            <option value="mon_nuoc">🍜 Món nước / Ăn sáng</option>
+            <option value="an_ngoai">🍕 Ăn ngoài / Đổi gió</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-600 mb-1.5">Nguyên liệu cơ bản (cách nhau bởi dấu phẩy)</label>
+          <textarea id="input-dish-ingredients" rows="2" placeholder="VD: Ngao tươi, Cà chua, Dứa, Hành lá"
+            class="w-full px-4 py-3 rounded-2xl bg-cream border border-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400 resize-none"></textarea>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/20 active:scale-[0.98] transition">
+          Thêm món & đưa vào vòng quay
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Kết Quả Vòng Quay -->
+  <div id="modal-wheel-result" class="fixed inset-0 z-40 hidden items-center justify-center bg-stone-900/50 backdrop-blur-xs p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-pop">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-coral-500 to-honey-400 flex items-center justify-center text-3xl shadow-md shadow-coral-500/25">
+        🎉
+      </div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-coral-500">Hôm nay chốt đơn món</p>
+        <h3 id="wheel-result-title" class="text-2xl font-extrabold text-stone-800 mt-1 break-words">Phở bò</h3>
+        <p id="wheel-result-ingredients" class="text-xs text-stone-500 mt-1.5 px-2"></p>
+      </div>
+
+      <div class="bg-cream rounded-2xl p-3 border border-orange-100 space-y-2">
+        <p class="text-xs font-semibold text-stone-500">Đưa vào thực đơn hôm nay (<span id="wheel-today-label">Thứ 2</span>):</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="setTargetMealSlot('lunch')" id="slot-btn-lunch"
+            class="py-2 rounded-xl text-xs font-bold border transition">
+            ☀️ Bữa Trưa
+          </button>
+          <button type="button" onclick="setTargetMealSlot('dinner')" id="slot-btn-dinner"
+            class="py-2 rounded-xl text-xs font-bold border transition">
+            🌙 Bữa Tối
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-1">
+        <button onclick="applyWheelResultToToday()"
+          class="w-full py-3.5 rounded-2xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md shadow-coral-500/25 active:scale-[0.98] transition">
+          🍲 Đưa vào thực đơn hôm nay
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="spinAgainFromModal()"
+            class="py-3 rounded-2xl bg-orange-50 hover:bg-orange-100 text-coral-600 font-bold text-sm active:scale-95 transition">
+            🔄 Quay lại
+          </button>
+          <button onclick="closeModal('modal-wheel-result')"
+            class="py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-sm active:scale-95 transition">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- LOGIC JAVASCRIPT                                          -->
+  <!-- ========================================================= -->
+  <script>
+    // =========================================================
+    // 1. AVATAR CHIBI SVG CHI TIẾT MẶC ĐỊNH
+    // =========================================================
+    const DEFAULT_CHIBI_SVG = `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+        <defs>
+          <radialGradient id="blushL" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FF8A9B" stop-opacity="0.72"/>
+            <stop offset="100%" stop-color="#FF8A9B" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="skinGrad" cx="50%" cy="42%" r="55%">
+            <stop offset="0%" stop-color="#FFEAD8"/>
+            <stop offset="100%" stop-color="#FAD2B8"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Nền tròn kem nhạt -->
+        <circle cx="100" cy="100" r="100" fill="#FFF4E2"/>
+
+        <!-- Ngôi sao nhỏ lấp lánh xung quanh -->
+        <path d="M26 84 L29 91 L36 92 L31 97 L32 104 L26 100 L20 104 L21 97 L16 92 L23 91 Z" fill="#FBBF24" stroke="#5A3327" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M174 78 L176.5 83.5 L182 84.5 L178 88.5 L179 94 L174 91 L169 94 L170 88.5 L166 84.5 L171.5 83.5 Z" fill="#FBBF24" stroke="#5A3327" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="34" cy="116" r="3.5" fill="#93C5FD" stroke="#5A3327" stroke-width="1.6"/>
+        <circle cx="168" cy="106" r="3" fill="#93C5FD" stroke="#5A3327" stroke-width="1.6"/>
+
+        <!-- Chùm tóc buộc 2 bên -->
+        <g stroke="#4A2B20" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Chùm trái -->
+          <path d="M46 66 C26 52, 16 68, 22 86 C26 78, 34 78, 42 82 Z" fill="#5D3A2B"/>
+          <path d="M44 64 C28 42, 12 48, 16 68 C24 62, 34 65, 42 74 Z" fill="#5D3A2B"/>
+          <!-- Chùm phải -->
+          <path d="M154 66 C174 52, 184 68, 178 86 C174 78, 166 78, 158 82 Z" fill="#5D3A2B"/>
+          <path d="M156 64 C172 42, 188 48, 184 68 C176 62, 166 65, 158 74 Z" fill="#5D3A2B"/>
+          <!-- Dây buộc tóc hồng -->
+          <ellipse cx="47" cy="69" rx="5.5" ry="8" transform="rotate(-25 47 69)" fill="#FF7E97"/>
+          <ellipse cx="153" cy="69" rx="5.5" ry="8" transform="rotate(25 153 69)" fill="#FF7E97"/>
+        </g>
+
+        <!-- Áo hồng cổ bèo dễ thương -->
+        <g stroke="#4A2B20" stroke-width="3" stroke-linejoin="round">
+          <path d="M42 198 C44 162, 66 148, 100 148 C134 148, 156 162, 158 198 Z" fill="#FFB3C6"/>
+          <!-- Cổ bèo trái & phải -->
+          <path d="M62 152 C52 162, 58 176, 70 176 C78 182, 92 178, 98 168 L82 148 Z" fill="#FFD6E0"/>
+          <path d="M138 152 C148 162, 142 176, 130 176 C122 182, 108 178, 102 168 L118 148 Z" fill="#FFD6E0"/>
+          <!-- Cúc áo nhỏ -->
+          <circle cx="100" cy="182" r="3" fill="#FFF4E2"/>
+        </g>
+
+        <!-- Tai -->
+        <circle cx="48" cy="108" r="11" fill="#FAD2B8" stroke="#4A2B20" stroke-width="3"/>
+        <circle cx="152" cy="108" r="11" fill="#FAD2B8" stroke="#4A2B20" stroke-width="3"/>
+
+        <!-- Tóc sau gáy -->
+        <ellipse cx="100" cy="88" rx="56" ry="54" fill="#5D3A2B" stroke="#4A2B20" stroke-width="3.2"/>
+
+        <!-- Khuôn mặt bầu bĩnh -->
+        <path d="M50 96 C50 62, 72 48, 100 48 C128 48, 150 62, 150 96 C150 132, 132 154, 100 154 C68 154, 50 132, 50 96 Z"
+          fill="url(#skinGrad)" stroke="#4A2B20" stroke-width="3.2"/>
+
+        <!-- Tóc mái lưa thưa đáng yêu -->
+        <path d="M50 86 C54 50, 74 36, 100 36 C126 36, 146 50, 150 86 C143 68, 134 58, 124 68 C120 56, 110 52, 104 68 C98 52, 86 52, 80 68 C72 56, 58 64, 50 86 Z"
+          fill="#5D3A2B" stroke="#4A2B20" stroke-width="3" stroke-linejoin="round"/>
+
+        <!-- Má phúng phính hồng hào -->
+        <ellipse cx="68" cy="120" rx="16" ry="11" fill="url(#blushL)"/>
+        <ellipse cx="132" cy="120" rx="16" ry="11" fill="url(#blushL)"/>
+
+        <!-- Chân mày mềm mại -->
+        <path d="M68 88 Q78 83 87 87" fill="none" stroke="#4A2B20" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M113 87 Q122 83 132 88" fill="none" stroke="#4A2B20" stroke-width="2.8" stroke-linecap="round"/>
+
+        <!-- Đôi mắt to tròn long lanh -->
+        <g>
+          <!-- Mắt trái -->
+          <ellipse cx="77" cy="105" rx="11.5" ry="12" fill="#3B2118"/>
+          <ellipse cx="77" cy="108" rx="7.5" ry="6.5" fill="#6D3F2E"/>
+          <circle cx="73" cy="101" r="4.2" fill="#FFFFFF"/>
+          <circle cx="81" cy="109" r="2" fill="#FFFFFF"/>
+          <!-- Mắt phải -->
+          <ellipse cx="123" cy="105" rx="11.5" ry="12" fill="#3B2118"/>
+          <ellipse cx="123" cy="108" rx="7.5" ry="6.5" fill="#6D3F2E"/>
+          <circle cx="119" cy="101" r="4.2" fill="#FFFFFF"/>
+          <circle cx="127" cy="109" r="2" fill="#FFFFFF"/>
+        </g>
+
+        <!-- Mũi nhỏ xinh -->
+        <path d="M97 118 Q100 121 103 118" fill="none" stroke="#C98A70" stroke-width="2.4" stroke-linecap="round"/>
+
+        <!-- Miệng cười chúm chím đáng yêu -->
+        <path d="M90 132 Q100 140 110 132" fill="none" stroke="#4A2B20" stroke-width="3" stroke-linecap="round"/>
+        <path d="M95 135 Q100 139 105 135" fill="#FF8FA3"/>
+      </svg>
+    `;
+
+    // =========================================================
+    // 2. THƯ VIỆN 40+ MÓN ĂN VIỆT NAM PHONG PHÚ
+    // =========================================================
+    const FOOD_CATEGORIES = [
+      { id: 'all', label: 'Tất cả', icon: '🍽️' },
+      { id: 'com_nha', label: 'Cơm nhà', icon: '🍚' },
+      { id: 'mon_nuoc', label: 'Món nước / Ăn sáng', icon: '🍜' },
+      { id: 'an_ngoai', label: 'Ăn ngoài / Đổi gió', icon: '🍕' },
+      { id: 'nha_minh', label: 'Món nhà mình', icon: '💖' }
+    ];
+
+    const DEFAULT_FOOD_LIBRARY = [
+      // --- Cơm nhà (20 món) ---
+      { id: 'cn1', name: 'Thịt kho tàu', category: 'com_nha', ingredients: 'Thịt ba chỉ, Trứng cút, Nước dừa, Hành tím' },
+      { id: 'cn2', name: 'Sườn xào chua ngọt', category: 'com_nha', ingredients: 'Sườn non, Cà chua, Hành tây, Tỏi, Chanh' },
+      { id: 'cn3', name: 'Cá kho tộ', category: 'com_nha', ingredients: 'Cá basa, Thịt ba chỉ, Hành tím, Ớt, Tiêu' },
+      { id: 'cn4', name: 'Canh chua cá lóc', category: 'com_nha', ingredients: 'Cá lóc, Dứa, Cà chua, Đậu bắp, Giá đỗ, Rau om' },
+      { id: 'cn5', name: 'Đậu hũ sốt cà chua', category: 'com_nha', ingredients: 'Đậu phụ, Cà chua, Hành lá, Hành tím' },
+      { id: 'cn6', name: 'Thịt luộc cà pháo', category: 'com_nha', ingredients: 'Thịt ba chỉ, Cà pháo, Rau sống, Tỏi, Ớt' },
+      { id: 'cn7', name: 'Trứng đúc thịt', category: 'com_nha', ingredients: 'Trứng gà, Thịt heo bằm, Hành lá, Nấm mèo' },
+      { id: 'cn8', name: 'Gà rang gừng', category: 'com_nha', ingredients: 'Thịt gà, Gừng tươi, Hành tím, Lá chanh' },
+      { id: 'cn9', name: 'Bò xào thiên lý', category: 'com_nha', ingredients: 'Thịt bò, Hoa thiên lý, Tỏi' },
+      { id: 'cn10', name: 'Rau muống xào tỏi', category: 'com_nha', ingredients: 'Rau muống, Tỏi' },
+      { id: 'cn11', name: 'Chả lá lốt', category: 'com_nha', ingredients: 'Thịt heo bằm, Lá lốt, Hành tím, Trứng gà' },
+      { id: 'cn12', name: 'Tôm rim mặn ngọt', category: 'com_nha', ingredients: 'Tôm tươi, Hành tím, Hành lá, Tỏi' },
+      { id: 'cn13', name: 'Canh cua rau đay', category: 'com_nha', ingredients: 'Cua đồng, Rau đay, Mồng tơi, Mướp hương' },
+      { id: 'cn14', name: 'Mực xào cần tỏi', category: 'com_nha', ingredients: 'Mực tươi, Cần tây, Hành tây, Cà chua, Tỏi' },
+      { id: 'cn15', name: 'Cá rán sốt cà', category: 'com_nha', ingredients: 'Cá diêu hồng, Cà chua, Hành lá, Thì là' },
+      { id: 'cn16', name: 'Vịt om sấu', category: 'com_nha', ingredients: 'Thịt vịt, Quả sấu, Khoai sọ, Sả, Rau rút' },
+      { id: 'cn17', name: 'Thịt rang cháy cạnh', category: 'com_nha', ingredients: 'Thịt ba chỉ, Hành tím, Hành lá' },
+      { id: 'cn18', name: 'Canh bí đỏ thịt bằm', category: 'com_nha', ingredients: 'Bí đỏ, Thịt heo bằm, Hành lá, Ngò gai' },
+      { id: 'cn19', name: 'Canh sườn nấu sấu', category: 'com_nha', ingredients: 'Sườn non, Quả sấu, Cà chua, Hành lá, Mùi tàu' },
+      { id: 'cn20', name: 'Gà kho sả ớt', category: 'com_nha', ingredients: 'Thịt gà, Sả, Ớt, Hành tím, Tỏi' },
+
+      // --- Món nước / Ăn sáng (10 món) ---
+      { id: 'mn1', name: 'Phở bò', category: 'mon_nuoc', ingredients: 'Bánh phở, Thịt bò, Xương bò, Hành lá, Rau thơm' },
+      { id: 'mn2', name: 'Bún chả', category: 'mon_nuoc', ingredients: 'Thịt ba chỉ, Bún tươi, Đu đủ xanh, Rau sống' },
+      { id: 'mn3', name: 'Bún bò Huế', category: 'mon_nuoc', ingredients: 'Bún sợi to, Thịt bắp bò, Giò heo, Sả, Mắm ruốc' },
+      { id: 'mn4', name: 'Bún riêu cua', category: 'mon_nuoc', ingredients: 'Bún tươi, Cua đồng, Cà chua, Đậu phụ, Rau sống' },
+      { id: 'mn5', name: 'Hủ tiếu', category: 'mon_nuoc', ingredients: 'Hủ tiếu, Thịt heo bằm, Tôm tươi, Trứng cút, Giá đỗ' },
+      { id: 'mn6', name: 'Bánh canh cua', category: 'mon_nuoc', ingredients: 'Bánh canh, Thịt cua, Tôm tươi, Trứng cút, Hành lá' },
+      { id: 'mn7', name: 'Bánh mì chảo', category: 'mon_nuoc', ingredients: 'Bánh mì, Trứng gà, Pate, Xúc xích, Dưa leo' },
+      { id: 'mn8', name: 'Xôi xéo', category: 'mon_nuoc', ingredients: 'Gạo nếp, Đậu xanh, Hành phi, Chả lụa' },
+      { id: 'mn9', name: 'Cháo sườn', category: 'mon_nuoc', ingredients: 'Gạo tẻ, Sườn non, Quẩy nóng, Ruốc thịt' },
+      { id: 'mn10', name: 'Mì Quảng', category: 'mon_nuoc', ingredients: 'Mì Quảng, Thịt gà, Tôm tươi, Đậu phộng, Bánh đa' },
+
+      // --- Ăn ngoài / Đổi gió (10 món) ---
+      { id: 'an1', name: 'Lẩu Thái', category: 'an_ngoai', ingredients: 'Tôm tươi, Mực tươi, Thịt bò, Nấm kim châm, Rau muống, Bún tươi' },
+      { id: 'an2', name: 'Nướng BBQ', category: 'an_ngoai', ingredients: 'Thịt ba chỉ, Thịt bò, Xà lách, Kim chi, Nấm đùi gà' },
+      { id: 'an3', name: 'Gà rán', category: 'an_ngoai', ingredients: 'Đùi gà, Bột chiên giòn, Khoai tây, Tương ớt' },
+      { id: 'an4', name: 'Pizza', category: 'an_ngoai', ingredients: 'Đế bánh pizza, Phô mai mozzarella, Xúc xích, Cà chua' },
+      { id: 'an5', name: 'Sushi', category: 'an_ngoai', ingredients: 'Gạo Nhật, Rong biển, Cá hồi, Dưa leo, Quả bơ' },
+      { id: 'an6', name: 'Cơm tấm sườn bì chả', category: 'an_ngoai', ingredients: 'Gạo tấm, Sườn cốt lết, Trứng gà, Dưa leo, Cà chua' },
+      { id: 'an7', name: 'Bánh xèo', category: 'an_ngoai', ingredients: 'Bột bánh xèo, Tôm tươi, Thịt ba chỉ, Giá đỗ, Rau sống' },
+      { id: 'an8', name: 'Nem nướng Nha Trang', category: 'an_ngoai', ingredients: 'Giò sống, Bánh tráng, Dưa leo, Xoài xanh, Rau sống' },
+      { id: 'an9', name: 'Bún đậu mắm tôm', category: 'an_ngoai', ingredients: 'Bún lá, Đậu phụ, Thịt chân giò, Chả cốm, Mắm tôm, Rau kinh giới' },
+      { id: 'an10', name: 'Mì cay', category: 'an_ngoai', ingredients: 'Mì gói Hàn Quốc, Tôm tươi, Mực tươi, Xúc xích, Kim chi, Bông cải xanh' }
+    ];
+
+    // =========================================================
+    // 3. CẤU HÌNH & STATE MẶC ĐỊNH
+    // =========================================================
+    const STORAGE_KEY = 'goc_gia_dinh_app_v2';
+
+    const DAYS_OF_WEEK = [
+      { id: 'mon', label: 'Thứ 2', jsDay: 1 },
+      { id: 'tue', label: 'Thứ 3', jsDay: 2 },
+      { id: 'wed', label: 'Thứ 4', jsDay: 3 },
+      { id: 'thu', label: 'Thứ 5', jsDay: 4 },
+      { id: 'fri', label: 'Thứ 6', jsDay: 5 },
+      { id: 'sat', label: 'Thứ 7', jsDay: 6 },
+      { id: 'sun', label: 'Chủ Nhật', jsDay: 0 }
+    ];
+
+    const DEFAULT_STATE = {
+      activeTab: 'stars',
+      menuSubTab: 'weekly',
+      soundEnabled: true,
+
+      // Tab 1: Tích Sao
+      childName: 'Bé Dâu',
+      avatarBase64: null, // null = dùng SVG Chibi mặc định
+      totalStars: 8,
+      weeklyGoal: {
+        title: 'Đi công viên & ăn kem cuối tuần',
+        cost: 20
+      },
+      tasks: [
+        { id: 't1', title: 'Ăn hết bát', stars: 2, icon: '🍚' },
+        { id: 't2', title: 'Tự dọn đồ chơi', stars: 1, icon: '🧸' },
+        { id: 't3', title: 'Đánh răng đúng giờ', stars: 1, icon: '🪥' },
+        { id: 't4', title: 'Học bài ngoan', stars: 2, icon: '📚' },
+        { id: 't5', title: 'Ngủ đúng giờ', stars: 1, icon: '🌙' },
+        { id: 't6', title: 'Quấy khóc / ăn vạ', stars: -1, icon: '😢' }
+      ],
+      rewards: [
+        { id: 'r1', title: 'Xem hoạt hình thêm 20 phút', cost: 5, icon: '📺' },
+        { id: 'r2', title: 'Ăn 1 cây kem mát lạnh', cost: 10, icon: '🍦' },
+        { id: 'r3', title: 'Mua bộ sticker / tô màu', cost: 15, icon: '🎨' },
+        { id: 'r4', title: 'Chọn 1 món đồ chơi nhỏ', cost: 30, icon: '🎁' }
+      ],
+      starHistory: [
+        { id: 'h1', text: 'Khởi tạo bảng sao bé ngoan', delta: 8, time: 'Hôm nay' }
+      ],
+
+      // Tab 2: Thực Đơn 7 Ngày & Đi Chợ
+      weeklyMenu: {
+        mon: {
+          lunch: { dish: 'Thịt kho tàu', ingredients: 'Thịt ba chỉ, Trứng cút, Nước dừa, Hành tím', locked: false },
+          dinner: { dish: 'Canh chua cá lóc', ingredients: 'Cá lóc, Dứa, Cà chua, Đậu bắp, Giá đỗ, Rau om', locked: false }
+        },
+        tue: {
+          lunch: { dish: 'Gà rang gừng', ingredients: 'Thịt gà, Gừng tươi, Hành tím, Lá chanh', locked: false },
+          dinner: { dish: 'Canh cua rau đay', ingredients: 'Cua đồng, Rau đay, Mồng tơi, Mướp hương', locked: false }
+        },
+        wed: {
+          lunch: { dish: 'Sườn xào chua ngọt', ingredients: 'Sườn non, Cà chua, Hành tây, Tỏi, Chanh', locked: false },
+          dinner: { dish: 'Trứng đúc thịt', ingredients: 'Trứng gà, Thịt heo bằm, Hành lá, Nấm mèo', locked: false }
+        },
+        thu: {
+          lunch: { dish: 'Bò xào thiên lý', ingredients: 'Thịt bò, Hoa thiên lý, Tỏi', locked: false },
+          dinner: { dish: 'Đậu hũ sốt cà chua', ingredients: 'Đậu phụ, Cà chua, Hành lá, Hành tím', locked: false }
+        },
+        fri: {
+          lunch: { dish: 'Tôm rim mặn ngọt', ingredients: 'Tôm tươi, Hành tím, Hành lá, Tỏi', locked: false },
+          dinner: { dish: 'Chả lá lốt', ingredients: 'Thịt heo bằm, Lá lốt, Hành tím, Trứng gà', locked: false }
+        },
+        sat: {
+          lunch: { dish: 'Bún chả', ingredients: 'Thịt ba chỉ, Bún tươi, Đu đủ xanh, Rau sống', locked: false },
+          dinner: { dish: 'Lẩu Thái', ingredients: 'Tôm tươi, Mực tươi, Thịt bò, Nấm kim châm, Rau muống, Bún tươi', locked: true }
+        },
+        sun: {
+          lunch: { dish: 'Cơm tấm sườn bì chả', ingredients: 'Gạo tấm, Sườn cốt lết, Trứng gà, Dưa leo, Cà chua', locked: false },
+          dinner: { dish: 'Canh bí đỏ thịt bằm', ingredients: 'Bí đỏ, Thịt heo bằm, Hành lá, Ngò gai', locked: false }
+        }
+      },
+      checkedShoppingKeys: {},
+      hiddenMenuKeys: {},
+      extraShoppingItems: [
+        { id: 'ex1', name: 'Sữa tươi không đường', checked: false },
+        { id: 'ex2', name: 'Trái cây tráng miệng', checked: false },
+        { id: 'ex3', name: 'Giấy ăn', checked: false }
+      ],
+
+      // Tab 3: Thư viện món ăn & Vòng quay
+      foodLibrary: structuredClone(DEFAULT_FOOD_LIBRARY),
+      wheelSelectedIds: ['cn1', 'cn2', 'cn3', 'cn8', 'mn1', 'mn2', 'an1', 'an6'],
+      wheelFilterCategory: 'all'
+    };
+
+    let state = loadState();
+    let historyExpanded = false;
+    let newTaskSign = 1;
+
+    // Biến vòng quay
+    let wheelRotation = 0;
+    let isSpinning = false;
+    let lastWheelWinnerObj = null;
+    let targetMealSlot = new Date().getHours() < 14 ? 'lunch' : 'dinner';
+
+    // =========================================================
+    // 4. LƯU & ĐỌC LOCALSTORAGE AN TOÀN
+    // =========================================================
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(DEFAULT_STATE);
+        const parsed = JSON.parse(raw);
+        return {
+          ...structuredClone(DEFAULT_STATE),
+          ...parsed,
+          weeklyGoal: { ...structuredClone(DEFAULT_STATE.weeklyGoal), ...(parsed.weeklyGoal || {}) },
+          weeklyMenu: { ...structuredClone(DEFAULT_STATE.weeklyMenu), ...(parsed.weeklyMenu || {}) },
+          foodLibrary: Array.isArray(parsed.foodLibrary) && parsed.foodLibrary.length > 0
+            ? parsed.foodLibrary
+            : structuredClone(DEFAULT_FOOD_LIBRARY)
+        };
+      } catch (err) {
+        console.warn('Lỗi đọc dữ liệu đã lưu:', err);
+        return structuredClone(DEFAULT_STATE);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {
+        console.warn('Lỗi lưu localStorage:', err);
+        showToast('Bộ nhớ trình duyệt gần đầy, hãy chọn ảnh nhẹ hơn nhé!', 'warning');
+      }
+    }
+
+    // =========================================================
+    // 5. ÂM THANH (WEB AUDIO API) & PHÁO GIẤY (CONFETTI)
+    // =========================================================
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!state.soundEnabled) return null;
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function playChime(type = 'star') {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        if (type === 'star') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.setValueAtTime(587.33, now);
+          osc.frequency.exponentialRampToValueAtTime(987.77, now + 0.14);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now);
+          osc.stop(now + 0.29);
+        } else if (type === 'minus') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.setValueAtTime(340, now);
+          osc.frequency.exponentialRampToValueAtTime(220, now + 0.16);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'tick') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.setValueAtTime(640, now);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.start(now);
+          osc.stop(now + 0.035);
+        } else if (type === 'win') {
+          [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            o.connect(g);
+            g.connect(ctx.destination);
+            const t = now + idx * 0.085;
+            o.frequency.setValueAtTime(freq, t);
+            g.gain.setValueAtTime(0.11, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+            o.start(t);
+            o.stop(t + 0.36);
+          });
+        }
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      saveState();
+      updateSoundIcon();
+      showToast(state.soundEnabled ? '🔊 Đã bật âm thanh' : '🔇 Đã tắt âm thanh');
+    }
+
+    function updateSoundIcon() {
+      document.getElementById('sound-icon').textContent = state.soundEnabled ? '🔊' : '🔇';
+    }
+
+    // Pháo giấy
+    let confettiParticles = [];
+    let confettiAnimId = null;
+
+    function launchConfetti(count = 45) {
+      const canvas = document.getElementById('confetti-canvas');
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colors = ['#FF6B4A', '#FBBF24', '#34D399', '#60A5FA', '#F472B6', '#A78BFA'];
+
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: window.innerWidth * (0.2 + Math.random() * 0.6),
+          y: window.innerHeight * 0.22 + (Math.random() * 60 - 30),
+          vx: (Math.random() - 0.5) * 10,
+          vy: -Math.random() * 9 - 3,
+          size: Math.random() * 7 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.25,
+          life: 1
+        });
+      }
+      if (!confettiAnimId) animateConfetti();
+    }
+
+    function animateConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      confettiParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.32;
+        p.rotation += p.vRot;
+        p.life -= 0.014;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.6);
+        ctx.restore();
+      });
+
+      confettiParticles = confettiParticles.filter(p => p.life > 0 && p.y < canvas.height + 20);
+      if (confettiParticles.length > 0) {
+        confettiAnimId = requestAnimationFrame(animateConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettiAnimId = null;
+      }
+    }
+
+    // Toast thông báo
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const bgClass = type === 'success'
+        ? 'bg-emerald-600 text-white'
+        : type === 'warning'
+          ? 'bg-amber-600 text-white'
+          : 'bg-stone-800 text-white';
+
+      el.className = `${bgClass} px-4 py-2.5 rounded-2xl shadow-lg text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 -translate-y-2`;
+      el.textContent = message;
+      container.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('opacity-0', '-translate-y-2'));
+      setTimeout(() => {
+        el.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => el.remove(), 300);
+      }, 2400);
+    }
+
+    // =========================================================
+    // 6. TIỆN ÍCH CHUNG & ĐIỀU HƯỚNG TAB / MODAL
+    // =========================================================
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      saveState();
+
+      ['stars', 'menu', 'wheel'].forEach(id => {
+        document.getElementById(`tab-${id}`).classList.toggle('hidden', id !== tabId);
+      });
+
+      document.querySelectorAll('.tab-btn-desktop').forEach(btn => {
+        const isActive = btn.dataset.tabBtn === tabId;
+        btn.className = isActive
+          ? 'tab-btn-desktop px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-white text-coral-600 shadow-xs'
+          : 'tab-btn-desktop px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 text-stone-600 hover:text-stone-900';
+      });
+
+      document.querySelectorAll('.tab-btn-mobile').forEach(btn => {
+        const isActive = btn.dataset.tabBtnMobile === tabId;
+        btn.className = isActive
+          ? 'tab-btn-mobile relative flex flex-col items-center justify-center gap-0.5 rounded-2xl my-1 transition-all bg-coral-50 text-coral-600'
+          : 'tab-btn-mobile relative flex flex-col items-center justify-center gap-0.5 rounded-2xl my-1 transition-all text-stone-500';
+      });
+
+      if (tabId === 'wheel') {
+        requestAnimationFrame(() => drawWheel());
+      }
+    }
+
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (!m) return;
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (!m) return;
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    document.querySelectorAll('[id^="modal-"]').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+      });
+    });
+
+    function getCurrentTimeLabel() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} • ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // =========================================================
+    // 7. LOGIC TAB 1: TÍCH SAO & AVATAR CHIBI
+    // =========================================================
+    function renderAvatarMarkup() {
+      if (state.avatarBase64) {
+        return `<img src="${state.avatarBase64}" alt="Avatar của bé" class="w-full h-full object-cover rounded-full" />`;
+      }
+      return DEFAULT_CHIBI_SVG;
+    }
+
+    function renderAvatarUI() {
+      const markup = renderAvatarMarkup();
+      document.getElementById('child-avatar-container').innerHTML = markup;
+      document.getElementById('modal-avatar-preview').innerHTML = markup;
+      document.getElementById('btn-reset-avatar').classList.toggle('hidden', !state.avatarBase64);
+    }
+
+    function openAvatarModal() {
+      renderAvatarUI();
+      openModal('modal-avatar');
+    }
+
+    function triggerAvatarFilePicker() {
+      const input = document.getElementById('avatar-file-input');
+      input.value = '';
+      input.click();
+    }
+
+    // Nén ảnh vuông tối đa 256x256 để lưu Base64 siêu nhẹ vào localStorage
+    function handleAvatarUpload(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Vui lòng chọn tệp hình ảnh nhé!', 'warning');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        const img = new Image();
+        img.onload = function () {
+          try {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Cắt vuông chính giữa (center crop)
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2;
+            const sy = (img.height - minSide) / 2;
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+            state.avatarBase64 = canvas.toDataURL('image/jpeg', 0.86);
+            saveState();
+            renderAvatarUI();
+            closeModal('modal-avatar');
+            launchConfetti(30);
+            showToast('Đã cập nhật avatar mới cho bé! 🥰', 'success');
+          } catch (err) {
+            showToast('Không thể xử lý ảnh này, thử ảnh khác nhé!', 'warning');
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetDefaultAvatar() {
+      state.avatarBase64 = null;
+      saveState();
+      renderAvatarUI();
+      closeModal('modal-avatar');
+      showToast('Đã khôi phục Avatar Chibi mặc định!');
+    }
+
+    function renderStarsTab() {
+      renderAvatarUI();
+      document.getElementById('child-name-text').textContent = state.childName;
+      document.getElementById('total-stars-value').textContent = state.totalStars;
+
+      // Mục tiêu quà cuối tuần
+      const goal = state.weeklyGoal;
+      const goalPct = Math.min(100, Math.round((state.totalStars / Math.max(1, goal.cost)) * 100));
+      const canRedeemGoal = state.totalStars >= goal.cost;
+      document.getElementById('weekly-goal-title').textContent = goal.title;
+      document.getElementById('weekly-goal-bar').style.width = `${goalPct}%`;
+      document.getElementById('weekly-goal-status').textContent = canRedeemGoal
+        ? `🎉 Đã đủ ${goal.cost} ⭐ để đổi quà cuối tuần!`
+        : `${state.totalStars} / ${goal.cost} ⭐ (còn thiếu ${goal.cost - state.totalStars} ⭐)`;
+      document.getElementById('weekly-goal-percent').textContent = `${goalPct}%`;
+      document.getElementById('redeem-weekly-goal-btn').classList.toggle('hidden', !canRedeemGoal);
+
+      // Danh sách nhiệm vụ (+/-)
+      const tasksEl = document.getElementById('tasks-list');
+      if (state.tasks.length === 0) {
+        tasksEl.innerHTML = `<div class="col-span-full text-center py-8 text-stone-400 text-sm">Chưa có nhiệm vụ nào. Nhấn "+ Thêm việc" để tạo mới nhé!</div>`;
+      } else {
+        tasksEl.innerHTML = state.tasks.map(task => {
+          const isPositive = task.stars > 0;
+          return `
+            <div class="flex items-center justify-between gap-2.5 p-3.5 rounded-2xl ${isPositive ? 'bg-cream/85 border-orange-100/90' : 'bg-rose-50/50 border-rose-100'} border transition">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-white border ${isPositive ? 'border-orange-100' : 'border-rose-100'} flex items-center justify-center text-lg shrink-0">
+                  ${escapeHtml(task.icon || (isPositive ? '⭐' : '⚠️'))}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-bold text-stone-800 text-sm leading-snug break-words">${escapeHtml(task.title)}</p>
+                  <p class="text-xs font-bold ${isPositive ? 'text-amber-600' : 'text-rose-500'}">
+                    ${isPositive ? '+' : ''}${task.stars} ⭐
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="triggerTaskStar('${task.id}')"
+                  class="px-3 py-2 rounded-xl ${
+                    isPositive
+                      ? 'bg-gradient-to-r from-coral-500 to-orange-500 hover:from-coral-600 hover:to-orange-600 text-white'
+                      : 'bg-rose-500 hover:bg-rose-600 text-white'
+                  } font-extrabold text-xs shadow-xs active:scale-95 transition">
+                  ${isPositive ? '+' : ''}${task.stars} ⭐
+                </button>
+                <button onclick="deleteTask('${task.id}')" title="Xóa nhiệm vụ"
+                  class="w-8 h-8 rounded-xl text-stone-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center transition">
+                  ✕
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Danh sách quà nhỏ
+      const rewardsEl = document.getElementById('rewards-list');
+      if (state.rewards.length === 0) {
+        rewardsEl.innerHTML = `<div class="col-span-full text-center py-8 text-stone-400 text-sm">Chưa có phần thưởng nào. Hãy thêm quà để tạo động lực cho bé!</div>`;
+      } else {
+        rewardsEl.innerHTML = state.rewards.map(reward => {
+          const pct = Math.min(100, Math.round((state.totalStars / Math.max(1, reward.cost)) * 100));
+          const canRedeem = state.totalStars >= reward.cost;
+          const missing = Math.max(0, reward.cost - state.totalStars);
+
+          return `
+            <div class="p-4 rounded-2xl bg-cream/80 border ${canRedeem ? 'border-honey-400 bg-honey-50/40' : 'border-orange-100/90'} flex flex-col justify-between gap-3 transition">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="text-2xl shrink-0">${escapeHtml(reward.icon || '🎁')}</span>
+                  <div class="min-w-0">
+                    <h4 class="font-bold text-stone-800 text-sm leading-snug break-words">${escapeHtml(reward.title)}</h4>
+                    <span class="text-xs font-bold text-honey-600">${reward.cost} ⭐</span>
+                  </div>
+                </div>
+                <button onclick="deleteReward('${reward.id}')" title="Xóa phần thưởng"
+                  class="w-7 h-7 rounded-lg text-stone-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center text-xs transition shrink-0">
+                  ✕
+                </button>
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-semibold">
+                  <span class="${canRedeem ? 'text-emerald-600' : 'text-stone-500'}">
+                    ${canRedeem ? '✨ Đã đủ sao đổi quà!' : `Còn thiếu ${missing} ⭐`}
+                  </span>
+                  <span class="text-stone-600">${pct}%</span>
+                </div>
+                <div class="w-full h-2 bg-orange-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-300 ${canRedeem ? 'bg-emerald-500' : 'bg-gradient-to-r from-honey-400 to-coral-500'}" style="width: ${pct}%"></div>
+                </div>
+              </div>
+
+              <button onclick="redeemReward('${reward.id}')" ${canRedeem ? '' : 'disabled'}
+                class="w-full py-2.5 rounded-xl text-xs font-extrabold transition ${
+                  canRedeem
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/25 active:scale-95 cursor-pointer'
+                    : 'bg-stone-200/70 text-stone-400 cursor-not-allowed'
+                }">
+                ${canRedeem ? '🎁 Đổi quà ngay' : `Cần ${reward.cost} ⭐`}
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Lịch sử
+      document.getElementById('history-count-badge').textContent = state.starHistory.length;
+      const historyEl = document.getElementById('star-history-panel');
+      if (state.starHistory.length === 0) {
+        historyEl.innerHTML = `<p class="text-xs text-stone-400 py-3 text-center">Chưa có lịch sử hoạt động.</p>`;
+      } else {
+        historyEl.innerHTML = state.starHistory.slice(0, 35).map(item => `
+          <div class="flex items-center justify-between gap-2 py-2 border-b border-orange-50 last:border-0 text-xs sm:text-sm">
+            <div class="min-w-0">
+              <p class="font-medium text-stone-700 truncate">${escapeHtml(item.text)}</p>
+              <p class="text-[11px] text-stone-400">${escapeHtml(item.time)}</p>
+            </div>
+            <span class="font-extrabold shrink-0 px-2 py-0.5 rounded-lg ${
+              item.delta > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+            }">
+              ${item.delta > 0 ? '+' : ''}${item.delta} ⭐
+            </span>
+          </div>
+        `).join('');
+      }
+    }
+
+    function animateStarCounter() {
+      const el = document.getElementById('total-stars-value');
+      el.classList.remove('animate-pop');
+      void el.offsetWidth;
+      el.classList.add('animate-pop');
+    }
+
+    function startEditChildName() {
+      document.getElementById('child-name-display').classList.add('hidden');
+      const editor = document.getElementById('child-name-editor');
+      editor.classList.remove('hidden');
+      const input = document.getElementById('child-name-input');
+      input.value = state.childName;
+      input.focus();
+      input.select();
+    }
+
+    function saveChildName() {
+      const val = document.getElementById('child-name-input').value.trim();
+      if (val) {
+        state.childName = val;
+        saveState();
+        showToast(`Đã đổi tên thành "${val}"`, 'success');
+      }
+      document.getElementById('child-name-editor').classList.add('hidden');
+      document.getElementById('child-name-display').classList.remove('hidden');
+      renderStarsTab();
+    }
+
+    document.getElementById('child-name-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveChildName();
+      if (e.key === 'Escape') {
+        document.getElementById('child-name-editor').classList.add('hidden');
+        document.getElementById('child-name-display').classList.remove('hidden');
+      }
+    });
+
+    function openWeeklyGoalModal() {
+      document.getElementById('input-goal-title').value = state.weeklyGoal.title;
+      document.getElementById('input-goal-cost').value = state.weeklyGoal.cost;
+      openModal('modal-weekly-goal');
+    }
+
+    function submitWeeklyGoal(e) {
+      e.preventDefault();
+      const title = document.getElementById('input-goal-title').value.trim();
+      const cost = Math.max(1, parseInt(document.getElementById('input-goal-cost').value, 10) || 20);
+      if (!title) return;
+      state.weeklyGoal = { title, cost };
+      saveState();
+      renderStarsTab();
+      closeModal('modal-weekly-goal');
+      showToast('Đã cập nhật mục tiêu quà cuối tuần!', 'success');
+    }
+
+    function redeemWeeklyGoal() {
+      const goal = state.weeklyGoal;
+      if (state.totalStars < goal.cost) return;
+      state.totalStars -= goal.cost;
+      state.starHistory.unshift({
+        id: 'h_' + Date.now(),
+        text: `🏆 Đổi quà cuối tuần: ${goal.title}`,
+        delta: -goal.cost,
+        time: getCurrentTimeLabel()
+      });
+      saveState();
+      renderStarsTab();
+      animateStarCounter();
+      playChime('win');
+      launchConfetti(80);
+      showToast(`🎉 Chúc mừng ${state.childName} đạt quà cuối tuần!`, 'success');
+    }
+
+    function triggerTaskStar(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (task.stars < 0 && state.totalStars <= 0) {
+        showToast('Số sao đang là 0 rồi, nhắc nhở nhẹ bé thôi nhé!', 'warning');
+        return;
+      }
+
+      state.totalStars = Math.max(0, state.totalStars + task.stars);
+      state.starHistory.unshift({
+        id: 'h_' + Date.now(),
+        text: task.stars > 0 ? `Hoàn thành: ${task.title}` : `Nhắc nhở: ${task.title}`,
+        delta: task.stars,
+        time: getCurrentTimeLabel()
+      });
+      if (state.starHistory.length > 60) state.starHistory.pop();
+
+      saveState();
+      renderStarsTab();
+      animateStarCounter();
+
+      if (task.stars > 0) {
+        playChime('star');
+        launchConfetti(30);
+        showToast(`Giỏi quá! ${state.childName} được +${task.stars} ⭐`, 'success');
+      } else {
+        playChime('minus');
+        showToast(`Nhắc nhở ${state.childName}: ${task.stars} ⭐`, 'warning');
+      }
+    }
+
+    function setNewTaskSign(sign) {
+      newTaskSign = sign;
+      const plusBtn = document.getElementById('task-type-plus');
+      const minusBtn = document.getElementById('task-type-minus');
+      plusBtn.className = sign === 1
+        ? 'py-2.5 rounded-xl text-xs font-bold border transition bg-emerald-500 text-white border-emerald-500'
+        : 'py-2.5 rounded-xl text-xs font-bold border transition bg-white text-stone-600 border-orange-200';
+      minusBtn.className = sign === -1
+        ? 'py-2.5 rounded-xl text-xs font-bold border transition bg-rose-500 text-white border-rose-500'
+        : 'py-2.5 rounded-xl text-xs font-bold border transition bg-white text-stone-600 border-orange-200';
+    }
+
+    function openAddTaskModal() {
+      setNewTaskSign(1);
+      document.getElementById('input-task-title').value = '';
+      document.getElementById('input-task-stars').value = 1;
+      openModal('modal-add-task');
+      setTimeout(() => document.getElementById('input-task-title').focus(), 100);
+    }
+
+    function submitNewTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('input-task-title').value.trim();
+      const amount = Math.max(1, parseInt(document.getElementById('input-task-stars').value, 10) || 1);
+      if (!title) return;
+
+      const posIcons = ['🌟', '🧹', '🎹', '🥦', '💧', '🎨', '🚲', '📝'];
+      const negIcons = ['😢', '📱', '⏰', '🗯️'];
+      const icon = newTaskSign > 0
+        ? posIcons[Math.floor(Math.random() * posIcons.length)]
+        : negIcons[Math.floor(Math.random() * negIcons.length)];
+
+      state.tasks.push({
+        id: 't_' + Date.now(),
+        title,
+        stars: newTaskSign * amount,
+        icon
+      });
+      saveState();
+      renderStarsTab();
+      closeModal('modal-add-task');
+      showToast('Đã thêm nhiệm vụ mới!', 'success');
+    }
+
+    function deleteTask(taskId) {
+      state.tasks = state.tasks.filter(t => t.id !== taskId);
+      saveState();
+      renderStarsTab();
+      showToast('Đã xóa nhiệm vụ');
+    }
+
+    function openAddRewardModal() {
+      document.getElementById('input-reward-title').value = '';
+      document.getElementById('input-reward-cost').value = 10;
+      openModal('modal-add-reward');
+      setTimeout(() => document.getElementById('input-reward-title').focus(), 100);
+    }
+
+    function submitNewReward(e) {
+      e.preventDefault();
+      const title = document.getElementById('input-reward-title').value.trim();
+      const cost = Math.max(1, parseInt(document.getElementById('input-reward-cost').value, 10) || 10);
+      if (!title) return;
+
+      const icons = ['🎁', '🧁', '🎬', '🧩', '🎈', '🍓', '🧸'];
+      state.rewards.push({
+        id: 'r_' + Date.now(),
+        title,
+        cost,
+        icon: icons[Math.floor(Math.random() * icons.length)]
+      });
+      saveState();
+      renderStarsTab();
+      closeModal('modal-add-reward');
+      showToast('Đã thêm phần thưởng mới!', 'success');
+    }
+
+    function deleteReward(rewardId) {
+      state.rewards = state.rewards.filter(r => r.id !== rewardId);
+      saveState();
+      renderStarsTab();
+      showToast('Đã xóa phần thưởng');
+    }
+
+    function redeemReward(rewardId) {
+      const reward = state.rewards.find(r => r.id === rewardId);
+      if (!reward || state.totalStars < reward.cost) return;
+
+      state.totalStars -= reward.cost;
+      state.starHistory.unshift({
+        id: 'h_' + Date.now(),
+        text: `🎁 Đổi quà: ${reward.title}`,
+        delta: -reward.cost,
+        time: getCurrentTimeLabel()
+      });
+      saveState();
+      renderStarsTab();
+      animateStarCounter();
+      playChime('win');
+      launchConfetti(65);
+      showToast(`🎉 Chúc mừng ${state.childName} đã đổi: ${reward.title}!`, 'success');
+    }
+
+    function toggleStarHistory() {
+      historyExpanded = !historyExpanded;
+      document.getElementById('star-history-panel').classList.toggle('hidden', !historyExpanded);
+      document.getElementById('history-chevron').style.transform = historyExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    // =========================================================
+    // 8. LOGIC TAB 2: THỰC ĐƠN 7 NGÀY (RANDOM + LOCK) & ĐI CHỢ
+    // =========================================================
+    function getTodayDayObj() {
+      const jsDay = new Date().getDay();
+      return DAYS_OF_WEEK.find(d => d.jsDay === jsDay) || DAYS_OF_WEEK[0];
+    }
+
+    function switchMenuSubTab(subTab) {
+      state.menuSubTab = subTab;
+      saveState();
+
+      const weeklyBtn = document.getElementById('subtab-btn-weekly');
+      const shoppingBtn = document.getElementById('subtab-btn-shopping');
+      const weeklyView = document.getElementById('menu-view-weekly');
+      const shoppingView = document.getElementById('menu-view-shopping');
+
+      if (subTab === 'weekly') {
+        weeklyBtn.className = 'flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-coral-500 text-white shadow-xs';
+        shoppingBtn.className = 'flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 text-stone-600 hover:bg-orange-50';
+        weeklyView.classList.remove('hidden');
+        shoppingView.classList.add('hidden');
+      } else {
+        shoppingBtn.className = 'flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-coral-500 text-white shadow-xs';
+        weeklyBtn.className = 'flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 text-stone-600 hover:bg-orange-50';
+        shoppingView.classList.remove('hidden');
+        weeklyView.classList.add('hidden');
+      }
+    }
+
+    function renderMealSlotCard(dayId, slot, mealData) {
+      const isLunch = slot === 'lunch';
+      const locked = !!mealData.locked;
+      const bgStyle = locked
+        ? 'bg-emerald-50/60 border-emerald-200'
+        : isLunch
+          ? 'bg-amber-50/55 border-amber-100/90'
+          : 'bg-orange-50/45 border-orange-100/90';
+
+      return `
+        <div class="p-3 rounded-2xl border ${bgStyle} transition space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider ${isLunch ? 'text-amber-700' : 'text-coral-600'}">
+                ${isLunch ? '☀️ Bữa Trưa' : '🌙 Bữa Tối'}
+              </span>
+              ${locked ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700">Đã chốt</span>' : ''}
+            </div>
+
+            <!-- 3 nút hành động: Khóa / Random 1 bữa / Sửa -->
+            <div class="flex items-center gap-1">
+              <button onclick="toggleMealLock('${dayId}', '${slot}')" title="${locked ? 'Mở khóa bữa ăn' : 'Khóa giữ nguyên món này'}"
+                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition active:scale-90 ${
+                  locked ? 'bg-emerald-500 text-white shadow-xs' : 'bg-white/90 text-stone-500 hover:bg-white border border-orange-100'
+                }">
+                ${locked ? '🔒' : '🔓'}
+              </button>
+              <button onclick="randomSingleMeal('${dayId}', '${slot}')" title="Random nhanh món khác cho bữa này"
+                class="w-7 h-7 rounded-lg bg-white/90 hover:bg-white border border-orange-100 text-xs flex items-center justify-center transition active:scale-90">
+                🎲
+              </button>
+              <button onclick="openEditMealModal('${dayId}', '${slot}')" title="Sửa / Chọn món từ thư viện"
+                class="w-7 h-7 rounded-lg bg-white/90 hover:bg-white border border-orange-100 text-xs flex items-center justify-center transition active:scale-90">
+                ✏️
+              </button>
+            </div>
+          </div>
+
+          <div onclick="openEditMealModal('${dayId}', '${slot}')" class="cursor-pointer">
+            <p class="font-bold text-stone-800 text-sm leading-snug">${escapeHtml(mealData.dish || 'Chưa lên món')}</p>
+            ${mealData.ingredients
+              ? `<p class="text-[11px] text-stone-500 mt-0.5 line-clamp-2">🥬 ${escapeHtml(mealData.ingredients)}</p>`
+              : '<p class="text-[11px] text-stone-400 italic mt-0.5">Chạm để thêm nguyên liệu...</p>'
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWeeklyMenu() {
+      const todayId = getTodayDayObj().id;
+      const container = document.getElementById('weekly-menu-grid');
+
+      container.innerHTML = DAYS_OF_WEEK.map(day => {
+        const dayData = state.weeklyMenu[day.id] || {
+          lunch: { dish: '', ingredients: '', locked: false },
+          dinner: { dish: '', ingredients: '', locked: false }
+        };
+        const isToday = day.id === todayId;
+
+        return `
+          <div class="bg-white rounded-3xl p-4 shadow-sm border ${isToday ? 'border-coral-400 ring-2 ring-coral-100' : 'border-orange-100/90'} space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-stone-800 text-base">${day.label}</span>
+                ${isToday ? '<span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-coral-500 text-white">Hôm nay</span>' : ''}
+              </div>
+            </div>
+            ${renderMealSlotCard(day.id, 'lunch', dayData.lunch)}
+            ${renderMealSlotCard(day.id, 'dinner', dayData.dinner)}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleMealLock(dayId, slot) {
+      const meal = state.weeklyMenu[dayId]?.[slot];
+      if (!meal) return;
+      meal.locked = !meal.locked;
+      saveState();
+      renderWeeklyMenu();
+      showToast(meal.locked ? '🔒 Đã khóa món này khi Random tuần' : '🔓 Đã mở khóa bữa ăn');
+    }
+
+    // Random 1 bữa ăn
+    function randomSingleMeal(dayId, slot) {
+      const meal = state.weeklyMenu[dayId]?.[slot];
+      if (!meal) return;
+      if (meal.locked) {
+        showToast('Bữa này đang khóa 🔒, hãy mở khóa trước khi đổi nhé!', 'warning');
+        return;
+      }
+
+      const pool = state.foodLibrary.filter(f => f.name !== meal.dish);
+      if (pool.length === 0) return;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+
+      meal.dish = pick.name;
+      meal.ingredients = pick.ingredients || '';
+      unhideIngredientsForText(meal.ingredients);
+
+      saveState();
+      renderWeeklyMenu();
+      renderShoppingList();
+      playChime('tick');
+      showToast(`🎲 Đổi sang: ${pick.name}`, 'success');
+    }
+
+    // Random cả tuần cho các bữa CHƯA BỊ KHÓA (hạn chế trùng lặp tối đa)
+    function randomWholeWeekMenu() {
+      const lockedNames = new Set();
+      let unlockedCount = 0;
+
+      DAYS_OF_WEEK.forEach(day => {
+        ['lunch', 'dinner'].forEach(slot => {
+          const m = state.weeklyMenu[day.id][slot];
+          if (m.locked) lockedNames.add(m.dish);
+          else unlockedCount++;
+        });
+      });
+
+      if (unlockedCount === 0) {
+        showToast('Tất cả các bữa đều đang bị khóa 🔒!', 'warning');
+        return;
+      }
+
+      // Ưu tiên cơm nhà + pha thêm món nước/đổi gió cho phong phú, xáo trộn không lặp
+      let shuffled = [...state.foodLibrary].sort(() => Math.random() - 0.5);
+      // Đưa các món chưa có trong lockedNames lên trước
+      let available = shuffled.filter(f => !lockedNames.has(f.name));
+      if (available.length < unlockedCount) {
+        available = [...available, ...shuffled];
+      }
+
+      let idx = 0;
+      DAYS_OF_WEEK.forEach(day => {
+        ['lunch', 'dinner'].forEach(slot => {
+          const m = state.weeklyMenu[day.id][slot];
+          if (!m.locked) {
+            const pick = available[idx % available.length];
+            idx++;
+            m.dish = pick.name;
+            m.ingredients = pick.ingredients || '';
+            unhideIngredientsForText(m.ingredients);
+          }
+        });
+      });
+
+      saveState();
+      renderWeeklyMenu();
+      renderShoppingList();
+      playChime('star');
+      launchConfetti(35);
+      showToast(`🎲 Đã random thực đơn mới cho ${unlockedCount} bữa chưa khóa!`, 'success');
+    }
+
+    function unhideIngredientsForText(ingredientsText) {
+      (ingredientsText || '').split(',').forEach(part => {
+        const key = part.trim().toLowerCase();
+        if (key && state.hiddenMenuKeys[key]) {
+          delete state.hiddenMenuKeys[key];
+          state.checkedShoppingKeys[key] = false;
+        }
+      });
+    }
+
+    function openEditMealModal(dayId, mealType) {
+      const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
+      const meal = state.weeklyMenu[dayId]?.[mealType] || { dish: '', ingredients: '' };
+
+      document.getElementById('edit-meal-day').value = dayId;
+      document.getElementById('edit-meal-type').value = mealType;
+      document.getElementById('edit-meal-badge').textContent = `${dayObj.label} • ${mealType === 'lunch' ? '☀️ Bữa Trưa' : '🌙 Bữa Tối'}`;
+      document.getElementById('edit-meal-dish').value = meal.dish;
+      document.getElementById('edit-meal-ingredients').value = meal.ingredients;
+      document.getElementById('meal-picker-search').value = '';
+
+      renderMealPickerOptions();
+      openModal('modal-edit-meal');
+    }
+
+    function renderMealPickerOptions() {
+      const q = (document.getElementById('meal-picker-search').value || '').trim().toLowerCase();
+      const filtered = state.foodLibrary.filter(f => !q || f.name.toLowerCase().includes(q));
+      const listEl = document.getElementById('meal-picker-list');
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<span class="text-xs text-stone-400">Không tìm thấy món phù hợp, bạn có thể nhập trực tiếp bên dưới.</span>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.slice(0, 24).map(f => `
+        <button type="button" onclick="pickLibraryDishForEdit('${f.id}')"
+          class="px-2.5 py-1 rounded-xl bg-white hover:bg-coral-50 hover:text-coral-600 border border-orange-200/80 text-xs font-semibold text-stone-700 transition">
+          ${escapeHtml(f.name)}
+        </button>
+      `).join('');
+    }
+
+    function pickLibraryDishForEdit(dishId) {
+      const dish = state.foodLibrary.find(f => f.id === dishId);
+      if (!dish) return;
+      document.getElementById('edit-meal-dish').value = dish.name;
+      document.getElementById('edit-meal-ingredients').value = dish.ingredients || '';
+    }
+
+    function submitEditMeal(e) {
+      e.preventDefault();
+      const dayId = document.getElementById('edit-meal-day').value;
+      const mealType = document.getElementById('edit-meal-type').value;
+      const dish = document.getElementById('edit-meal-dish').value.trim();
+      const ingredients = document.getElementById('edit-meal-ingredients').value.trim();
+
+      const prevLocked = !!state.weeklyMenu[dayId]?.[mealType]?.locked;
+      state.weeklyMenu[dayId][mealType] = { dish, ingredients, locked: prevLocked };
+      unhideIngredientsForText(ingredients);
+
+      saveState();
+      renderWeeklyMenu();
+      renderShoppingList();
+      closeModal('modal-edit-meal');
+      showToast('Đã lưu thực đơn & cập nhật Checklist đi chợ!', 'success');
+    }
+
+    // Tổng hợp Checklist đi chợ
+    function buildAggregatedShoppingItems() {
+      const map = new Map();
+
+      DAYS_OF_WEEK.forEach(day => {
+        const dayData = state.weeklyMenu[day.id];
+        if (!dayData) return;
+        ['lunch', 'dinner'].forEach(slot => {
+          const rawIng = dayData[slot]?.ingredients || '';
+          rawIng.split(',').forEach(part => {
+            const clean = part.trim();
+            if (!clean) return;
+            const key = clean.toLowerCase();
+            if (state.hiddenMenuKeys[key]) return;
+
+            if (map.has(key)) {
+              map.get(key).count += 1;
+            } else {
+              const displayName = clean.charAt(0).toUpperCase() + clean.slice(1);
+              map.set(key, {
+                type: 'menu',
+                key,
+                name: displayName,
+                count: 1,
+                checked: !!state.checkedShoppingKeys[key]
+              });
+            }
+          });
+        });
+      });
+
+      const extraItems = state.extraShoppingItems.map(item => ({
+        type: 'extra',
+        id: item.id,
+        key: 'extra_' + item.id,
+        name: item.name,
+        count: 1,
+        checked: !!item.checked
+      }));
+
+      const allItems = [...Array.from(map.values()), ...extraItems];
+      allItems.sort((a, b) => {
+        if (a.checked !== b.checked) return a.checked ? 1 : -1;
+        return a.name.localeCompare(b.name, 'vi');
+      });
+      return allItems;
+    }
+
+    function renderShoppingList() {
+      const items = buildAggregatedShoppingItems();
+      const total = items.length;
+      const checkedCount = items.filter(i => i.checked).length;
+      const uncheckedCount = total - checkedCount;
+
+      const badge = document.getElementById('shopping-badge');
+      badge.textContent = uncheckedCount;
+      badge.classList.toggle('hidden', uncheckedCount === 0);
+
+      const mobileDot = document.getElementById('mobile-shopping-dot');
+      if (mobileDot) mobileDot.classList.toggle('hidden', uncheckedCount === 0);
+
+      document.getElementById('shopping-progress-text').textContent = `Đã mua ${checkedCount}/${total} món`;
+      document.getElementById('shopping-progress-bar').style.width = `${total === 0 ? 0 : Math.round((checkedCount / total) * 100)}%`;
+
+      document.getElementById('restore-menu-items-btn').classList.toggle('hidden', Object.keys(state.hiddenMenuKeys).length === 0);
+
+      const listEl = document.getElementById('shopping-list-container');
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="py-10 text-center text-stone-400 text-sm">Danh sách đi chợ đang trống.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = items.map(item => `
+        <div class="flex items-center justify-between gap-3 py-3 px-1.5 transition ${item.checked ? 'opacity-55' : ''}">
+          <label class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer select-none">
+            <input type="checkbox" ${item.checked ? 'checked' : ''}
+              onchange="toggleShoppingItem('${item.type}', '${escapeHtml(item.type === 'extra' ? item.id : item.key)}')"
+              class="w-5 h-5 rounded-lg accent-coral-500 cursor-pointer shrink-0" />
+            <div class="min-w-0 flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-semibold ${item.checked ? 'line-through text-stone-400' : 'text-stone-800'} break-words">
+                ${escapeHtml(item.name)}
+              </span>
+              ${item.count > 1 ? `<span class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700">×${item.count} bữa</span>` : ''}
+              ${item.type === 'extra' ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-600">Mua thêm</span>` : ''}
+            </div>
+          </label>
+          ${item.type === 'extra' ? `
+            <button onclick="deleteExtraShoppingItem('${item.id}')" title="Xóa"
+              class="w-7 h-7 rounded-lg text-stone-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center text-xs shrink-0">
+              ✕
+            </button>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function toggleShoppingItem(type, identifier) {
+      if (type === 'extra') {
+        const item = state.extraShoppingItems.find(i => i.id === identifier);
+        if (item) item.checked = !item.checked;
+      } else {
+        state.checkedShoppingKeys[identifier] = !state.checkedShoppingKeys[identifier];
+      }
+      saveState();
+      renderShoppingList();
+    }
+
+    function addExtraShoppingItem(e) {
+      e.preventDefault();
+      const input = document.getElementById('extra-shopping-input');
+      const name = input.value.trim();
+      if (!name) return;
+      state.extraShoppingItems.unshift({ id: 'ex_' + Date.now(), name, checked: false });
+      input.value = '';
+      saveState();
+      renderShoppingList();
+      showToast(`Đã thêm "${name}" vào giỏ đi chợ`, 'success');
+    }
+
+    function deleteExtraShoppingItem(id) {
+      state.extraShoppingItems = state.extraShoppingItems.filter(i => i.id !== id);
+      saveState();
+      renderShoppingList();
+    }
+
+    function clearCheckedShoppingItems() {
+      let removed = 0;
+      const before = state.extraShoppingItems.length;
+      state.extraShoppingItems = state.extraShoppingItems.filter(i => !i.checked);
+      removed += (before - state.extraShoppingItems.length);
+
+      Object.keys(state.checkedShoppingKeys).forEach(key => {
+        if (state.checkedShoppingKeys[key]) {
+          state.hiddenMenuKeys[key] = true;
+          delete state.checkedShoppingKeys[key];
+          removed++;
+        }
+      });
+
+      if (removed === 0) {
+        showToast('Chưa có món nào được tích chọn đã mua!');
+        return;
+      }
+      saveState();
+      renderShoppingList();
+      showToast(`Đã xóa ${removed} mục đã mua!`, 'success');
+    }
+
+    function restoreHiddenMenuItems() {
+      state.hiddenMenuKeys = {};
+      saveState();
+      renderShoppingList();
+      showToast('Đã khôi phục nguyên liệu từ thực đơn tuần!', 'success');
+    }
+
+    // =========================================================
+    // 9. LOGIC TAB 3: VÒNG QUAY 'HÔM NAY ĂN GÌ?' & THƯ VIỆN MÓN
+    // =========================================================
+    const WHEEL_COLORS = [
+      '#FF6B4A', '#FBBF24', '#34D399', '#60A5FA',
+      '#F472B6', '#FB923C', '#A78BFA', '#2DD4BF',
+      '#F87171', '#FACC15', '#4ADE80', '#38BDF8'
+    ];
+
+    function getSelectedWheelDishes() {
+      const idSet = new Set(state.wheelSelectedIds);
+      return state.foodLibrary.filter(f => idSet.has(f.id));
+    }
+
+    function getCategoryMeta(catId) {
+      return FOOD_CATEGORIES.find(c => c.id === catId) || FOOD_CATEGORIES[0];
+    }
+
+    function setWheelCategoryFilter(catId) {
+      state.wheelFilterCategory = catId;
+      saveState();
+      renderWheelLibrary();
+    }
+
+    function clearWheelSearch() {
+      document.getElementById('wheel-search-input').value = '';
+      renderWheelLibrary();
+    }
+
+    function getFilteredLibraryDishes() {
+      const cat = state.wheelFilterCategory || 'all';
+      const q = (document.getElementById('wheel-search-input')?.value || '').trim().toLowerCase();
+      return state.foodLibrary.filter(dish => {
+        const matchCat = cat === 'all' || dish.category === cat;
+        const matchSearch = !q || dish.name.toLowerCase().includes(q) || (dish.ingredients || '').toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      });
+    }
+
+    function renderWheelLibrary() {
+      // 1. Render Category Pills
+      const pillsEl = document.getElementById('wheel-category-pills');
+      pillsEl.innerHTML = FOOD_CATEGORIES.map(cat => {
+        const isActive = (state.wheelFilterCategory || 'all') === cat.id;
+        const count = cat.id === 'all'
+          ? state.foodLibrary.length
+          : state.foodLibrary.filter(f => f.category === cat.id).length;
+        return `
+          <button onclick="setWheelCategoryFilter('${cat.id}')"
+            class="px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition shrink-0 flex items-center gap-1.5 ${
+              isActive
+                ? 'bg-coral-500 text-white shadow-xs'
+                : 'bg-cream text-stone-600 border border-orange-100 hover:bg-orange-50'
+            }">
+            <span>${cat.icon}</span>
+            <span>${cat.label}</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-white/25 text-white' : 'bg-orange-100/80 text-stone-600'}">${count}</span>
+          </button>
+        `;
+      }).join('');
+
+      // 2. Cập nhật nút xóa tìm kiếm & số món đang chọn
+      const searchVal = document.getElementById('wheel-search-input').value;
+      document.getElementById('wheel-search-clear').classList.toggle('hidden', !searchVal);
+
+      const selectedSet = new Set(state.wheelSelectedIds);
+      const selectedCount = getSelectedWheelDishes().length;
+      document.getElementById('wheel-selected-badge').textContent = `Đang chọn ${selectedCount} món`;
+
+      // 3. Render danh sách món ăn
+      const filtered = getFilteredLibraryDishes();
+      const gridEl = document.getElementById('wheel-library-grid');
+
+      if (filtered.length === 0) {
+        gridEl.innerHTML = `
+          <div class="col-span-full py-8 text-center text-stone-400 text-sm">
+            ${state.wheelFilterCategory === 'nha_minh'
+              ? 'Chưa có món tự thêm nào. Nhấn "+ Thêm món mới" để lưu món tủ của nhà mình nhé!'
+              : 'Không tìm thấy món ăn nào phù hợp.'}
+          </div>`;
+        return;
+      }
+
+      gridEl.innerHTML = filtered.map(dish => {
+        const checked = selectedSet.has(dish.id);
+        const catMeta = getCategoryMeta(dish.category);
+        return `
+          <div class="flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl border transition ${
+            checked ? 'bg-coral-50/55 border-coral-300' : 'bg-cream/60 border-orange-100/90 hover:border-orange-200'
+          }">
+            <label class="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer select-none">
+              <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleDishOnWheel('${dish.id}')"
+                class="w-4 h-4 mt-0.5 rounded accent-coral-500 cursor-pointer shrink-0" />
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm font-bold text-stone-800 truncate">${escapeHtml(dish.name)}</span>
+                  <span class="text-[11px] shrink-0" title="${catMeta.label}">${catMeta.icon}</span>
+                </div>
+                ${dish.ingredients ? `<p class="text-[11px] text-stone-500 truncate">${escapeHtml(dish.ingredients)}</p>` : ''}
+              </div>
+            </label>
+            ${dish.isCustom ? `
+              <button onclick="deleteCustomDish('${dish.id}')" title="Xóa món tự thêm"
+                class="w-7 h-7 rounded-lg text-stone-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center text-xs shrink-0">
+                ✕
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleDishOnWheel(dishId) {
+      if (isSpinning) return;
+      const idx = state.wheelSelectedIds.indexOf(dishId);
+      if (idx >= 0) {
+        state.wheelSelectedIds.splice(idx, 1);
+      } else {
+        state.wheelSelectedIds.push(dishId);
+      }
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+    }
+
+    function selectAllInCurrentCategory() {
+      if (isSpinning) return;
+      const filtered = getFilteredLibraryDishes();
+      const set = new Set(state.wheelSelectedIds);
+      filtered.forEach(f => set.add(f.id));
+      state.wheelSelectedIds = Array.from(set);
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+      showToast(`Đã chọn tất cả ${filtered.length} món trong mục hiện tại!`, 'success');
+    }
+
+    function selectRandom8Dishes() {
+      if (isSpinning) return;
+      const pool = getFilteredLibraryDishes();
+      const source = pool.length >= 2 ? pool : state.foodLibrary;
+      const shuffled = [...source].sort(() => Math.random() - 0.5);
+      const picked = shuffled.slice(0, Math.min(8, shuffled.length));
+      state.wheelSelectedIds = picked.map(f => f.id);
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+      showToast(`🎲 Đã chọn ngẫu nhiên ${picked.length} món lên vòng quay!`, 'success');
+    }
+
+    function deselectAllDishes() {
+      if (isSpinning) return;
+      state.wheelSelectedIds = [];
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+      showToast('Đã bỏ chọn tất cả món trên vòng quay');
+    }
+
+    function openAddDishModal() {
+      document.getElementById('input-dish-name').value = '';
+      document.getElementById('input-dish-ingredients').value = '';
+      document.getElementById('input-dish-category').value =
+        state.wheelFilterCategory !== 'all' ? state.wheelFilterCategory : 'nha_minh';
+      openModal('modal-add-dish');
+      setTimeout(() => document.getElementById('input-dish-name').focus(), 100);
+    }
+
+    function submitNewDish(e) {
+      e.preventDefault();
+      const name = document.getElementById('input-dish-name').value.trim();
+      const category = document.getElementById('input-dish-category').value;
+      const ingredients = document.getElementById('input-dish-ingredients').value.trim();
+      if (!name) return;
+
+      const newDish = {
+        id: 'custom_' + Date.now(),
+        name,
+        category,
+        ingredients,
+        isCustom: true
+      };
+      state.foodLibrary.unshift(newDish);
+      state.wheelSelectedIds.push(newDish.id);
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+      closeModal('modal-add-dish');
+      showToast(`Đã thêm "${name}" vào thư viện & vòng quay!`, 'success');
+    }
+
+    function deleteCustomDish(dishId) {
+      if (isSpinning) return;
+      state.foodLibrary = state.foodLibrary.filter(f => f.id !== dishId);
+      state.wheelSelectedIds = state.wheelSelectedIds.filter(id => id !== dishId);
+      saveState();
+      renderWheelLibrary();
+      drawWheel();
+      showToast('Đã xóa món tự thêm');
+    }
+
+    // Vẽ vòng quay HTML5 Canvas sắc nét
+    function drawWheel() {
+      const canvas = document.getElementById('wheel-canvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const displaySize = Math.max(240, Math.floor(Math.min(rect.width, rect.height)));
+      const dpr = window.devicePixelRatio || 1;
+
+      if (canvas.width !== displaySize * dpr || canvas.height !== displaySize * dpr) {
+        canvas.width = displaySize * dpr;
+        canvas.height = displaySize * dpr;
+      }
+
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, displaySize, displaySize);
+
+      const cx = displaySize / 2;
+      const cy = displaySize / 2;
+      const radius = displaySize / 2 - 8;
+      const items = getSelectedWheelDishes();
+
+      // Viền ngoài
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFF4F1';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#FFD7C9';
+      ctx.stroke();
+
+      if (items.length === 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#F5F5F4';
+        ctx.fill();
+        ctx.fillStyle = '#78716C';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Hãy tích chọn ít nhất 2 món', cx, cy - 10);
+        ctx.fillText('ở danh sách bên dưới nhé!', cx, cy + 12);
+        ctx.restore();
+        return;
+      }
+
+      const sliceAngle = (Math.PI * 2) / items.length;
+      const fontSize = items.length > 16 ? 9.5 : items.length > 10 ? 11 : 12.5;
+
+      items.forEach((item, idx) => {
+        const startAngle = wheelRotation + idx * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = WHEEL_COLORS[idx % WHEEL_COLORS.length];
+        ctx.fill();
+        ctx.lineWidth = items.length > 18 ? 1 : 2;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `700 ${fontSize}px Inter, sans-serif`;
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = 3;
+
+        let label = item.name;
+        const maxTextWidth = radius * 0.62;
+        while (ctx.measureText(label).width > maxTextWidth && label.length > 4) {
+          label = label.slice(0, -2) + '…';
+        }
+        ctx.fillText(label, radius - 14, 0);
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      const items = getSelectedWheelDishes();
+      if (items.length < 2) {
+        showToast('Cần chọn ít nhất 2 món để quay nhé!', 'warning');
+        return;
+      }
+
+      isSpinning = true;
+      const startRot = wheelRotation;
+      const totalDelta = (5 + Math.random() * 3) * Math.PI * 2 + Math.random() * Math.PI * 2;
+      const duration = 4200;
+      const startTime = performance.now();
+      const sliceAngle = (Math.PI * 2) / items.length;
+      let lastSliceIdx = -1;
+
+      function easeOutQuart(t) {
+        return 1 - Math.pow(1 - t, 4);
+      }
+
+      function step(now) {
+        const progress = Math.min(1, (now - startTime) / duration);
+        wheelRotation = startRot + totalDelta * easeOutQuart(progress);
+        drawWheel();
+
+        const pointerAngle = (Math.PI * 1.5 - wheelRotation) % (Math.PI * 2);
+        const normalized = (pointerAngle + Math.PI * 2) % (Math.PI * 2);
+        const currentSliceIdx = Math.floor(normalized / sliceAngle) % items.length;
+
+        if (currentSliceIdx !== lastSliceIdx) {
+          lastSliceIdx = currentSliceIdx;
+          if (progress < 0.96) playChime('tick');
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          isSpinning = false;
+          wheelRotation = wheelRotation % (Math.PI * 2);
+          showWheelWinner(items[currentSliceIdx]);
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function showWheelWinner(dishObj) {
+      lastWheelWinnerObj = dishObj;
+      document.getElementById('wheel-result-title').textContent = dishObj.name;
+      document.getElementById('wheel-result-ingredients').textContent = dishObj.ingredients
+        ? `🥬 Nguyên liệu: ${dishObj.ingredients}`
+        : '';
+      document.getElementById('wheel-today-label').textContent = getTodayDayObj().label;
+
+      targetMealSlot = new Date().getHours() < 14 ? 'lunch' : 'dinner';
+      setTargetMealSlot(targetMealSlot);
+
+      playChime('win');
+      launchConfetti(70);
+      openModal('modal-wheel-result');
+    }
+
+    function setTargetMealSlot(slot) {
+      targetMealSlot = slot;
+      document.getElementById('slot-btn-lunch').className = slot === 'lunch'
+        ? 'py-2 rounded-xl text-xs font-bold border transition bg-coral-500 text-white border-coral-500 shadow-xs'
+        : 'py-2 rounded-xl text-xs font-bold border transition bg-white text-stone-600 border-orange-200';
+      document.getElementById('slot-btn-dinner').className = slot === 'dinner'
+        ? 'py-2 rounded-xl text-xs font-bold border transition bg-coral-500 text-white border-coral-500 shadow-xs'
+        : 'py-2 rounded-xl text-xs font-bold border transition bg-white text-stone-600 border-orange-200';
+    }
+
+    // Đồng bộ cả TÊN MÓN + NGUYÊN LIỆU sang Tab 2 (Thực đơn & Đi chợ)
+    function applyWheelResultToToday() {
+      if (!lastWheelWinnerObj) return;
+      const todayObj = getTodayDayObj();
+      const prevLocked = !!state.weeklyMenu[todayObj.id][targetMealSlot].locked;
+      state.weeklyMenu[todayObj.id][targetMealSlot] = {
+        dish: lastWheelWinnerObj.name,
+        ingredients: lastWheelWinnerObj.ingredients || '',
+        locked: prevLocked
+      };
+      unhideIngredientsForText(lastWheelWinnerObj.ingredients);
+
+      saveState();
+      renderWeeklyMenu();
+      renderShoppingList();
+      closeModal('modal-wheel-result');
+
+      const slotLabel = targetMealSlot === 'lunch' ? 'Bữa Trưa' : 'Bữa Tối';
+      showToast(`Đã đưa "${lastWheelWinnerObj.name}" & nguyên liệu vào ${slotLabel} ${todayObj.label}!`, 'success');
+    }
+
+    function spinAgainFromModal() {
+      closeModal('modal-wheel-result');
+      setTimeout(() => spinWheel(), 180);
+    }
+
+    // =========================================================
+    // 10. KHỞI TẠO ỨNG DỤNG
+    // =========================================================
+    window.addEventListener('resize', () => {
+      if (state.activeTab === 'wheel') drawWheel();
+    });
+
+    window.onload = function () {
+      updateSoundIcon();
+      renderStarsTab();
+      renderWeeklyMenu();
+      renderShoppingList();
+      switchMenuSubTab(state.menuSubTab || 'weekly');
+      renderWheelLibrary();
+      switchTab(state.activeTab || 'stars');
+    };
+  </script>
+</body>
+</html>
